@@ -81,6 +81,16 @@ ul{margin:6px 0;padding-left:1.2em;line-height:1.8}
 .quitbar{margin-top:8px}
 /* 結果・アンケート */
 .end h2{margin:2px 0}
+.cert{position:relative;border-radius:16px;padding:20px 18px;margin:12px 0 6px;color:#fff;background:linear-gradient(135deg,#5b6cff 0%,#8a5bff 55%,#ff7a59 100%);overflow:hidden}
+.cert .series{font-size:12px;letter-spacing:.14em;opacity:.9}
+.cert .scn{font-size:14px;margin-top:10px;opacity:.95}
+.cert .no{font-size:40px;font-weight:800;letter-spacing:.04em;line-height:1.1;margin-top:6px;font-variant-numeric:tabular-nums}
+.cert .no small{font-size:20px;opacity:.85}
+.cert .en{font-size:20px;font-weight:700;margin-top:2px}
+.cert .foot{display:flex;justify-content:space-between;gap:8px;font-size:12px;opacity:.9;margin-top:14px}
+.certtools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0 4px}
+.certtools input{flex:1;min-width:0}
+.certtools .btn{flex:none}
 table.rec{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}
 table.rec td{border-top:1px solid var(--line);padding:6px 4px;vertical-align:top}
 table.rec td:first-child{white-space:nowrap;width:1%}
@@ -442,17 +452,57 @@ function finish(status, ending) {
     ? `<tr><td><span class="tag s">SPARK</span></td><td>${esc(e.title)} → <b>${esc(rt(e.label))}</b></td></tr>`
     : `<tr><td><span class="tag f">FATE</span></td><td>${esc(e.title)} → <b>${e.v}</b> <span class="muted">（${e.how}）</span></td></tr>`).join('');
   const m = Math.floor(G.seconds / 60), s = G.seconds % 60;
+  const no = G.decision && G.decision.no, total = G.decision && G.decision.total;
+  G.cert = { title: SC.meta.title, ending, no, total, date: new Date().toLocaleDateString('ja-JP') };
   $('summary').innerHTML = status === 'completed'
-    ? `<div class="muted">${esc(SC.meta.title)}</div><h2>${esc(ending)}</h2>
+    ? `<div class="muted">完走証明カード</div>
+       <div class="cert" id="cert"><div class="series">7 FATES, 7 SPARKS</div><div class="scn">${esc(SC.meta.title)}</div>
+         <div class="no">No.${no}<small> / ${total}</small></div><div class="en">${esc(ending)}</div>
+         <div class="foot"><span id="certName"></span><span>${esc(G.cert.date)}</span></div></div>
+       <div class="certtools"><input type="text" id="nameIn" maxlength="20" placeholder="カードに入れる名前（任意・送信されません）"><button class="btn" id="saveCard">画像で保存</button></div>
+       <p class="muted" id="cardMsg" style="margin:0 0 8px">番号は結末ごとに決まっています。別の結末を目指して、カードを集めてみてください。</p>
        <div class="muted">プレイ時間 ${m}分${s}秒 ／ 任意選択 ${G.st.s}回・ダイス ${G.st.f}回</div><table class="rec">${recRows}</table>`
     : `<div class="muted">${esc(SC.meta.title)}</div><h2>途中でやめました</h2>
        <div class="muted">プレイ時間 ${m}分${s}秒 ／ 任意選択 ${G.st.s}/${SC.rules.S}回・ダイス ${G.st.f}/${SC.rules.F}回</div>${recRows ? `<table class="rec">${recRows}</table>` : ''}`;
+  if (status === 'completed') {
+    $('nameIn').addEventListener('input', () => { $('certName').textContent = $('nameIn').value.trim(); });
+    $('saveCard').onclick = saveCard;
+  }
   $('formNote').textContent = status === 'completed' ? '答えられる項目だけで大丈夫です。' : '答えられる項目だけで大丈夫です。まだ体験していない内容の項目は、空欄のままで構いません。';
   drawQuestions();
   $('comment').value = ''; $('cCount').textContent = '0'; $('genreOther') && ($('genreOther').value = '');
   $('sendMsg').innerHTML = ''; $('sendBtn').disabled = false;
   $('formCard').classList.remove('hidden'); $('thanks').classList.add('hidden');
   show('result'); window.scrollTo(0, 0);
+}
+
+function saveCard() {
+  const c = G.cert, name = ($('nameIn').value || '').trim().slice(0, 20);
+  const W = 1080, H = 1350, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const x = cv.getContext('2d');
+  const g = x.createLinearGradient(0, 0, W, H); g.addColorStop(0, '#5b6cff'); g.addColorStop(0.55, '#8a5bff'); g.addColorStop(1, '#ff7a59');
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+  x.fillStyle = 'rgba(255,255,255,0.10)'; for (let i = 0; i < 7; i++) { x.beginPath(); x.arc(990 - i * 12, 200 + i * 70, 14 + i * 5, 0, Math.PI * 2); x.fill(); }
+  const F = '"Hiragino Sans","Noto Sans JP","Yu Gothic",sans-serif';
+  const wrap = (t, maxW) => { const lines = []; let cur = ''; for (const ch of t) { if (x.measureText(cur + ch).width > maxW && cur) { lines.push(cur); cur = ch; } else cur += ch; } if (cur) lines.push(cur); return lines; };
+  x.fillStyle = '#fff'; x.textBaseline = 'top';
+  x.font = `600 40px ${F}`; x.fillText('7 FATES, 7 SPARKS', 90, 110);
+  x.font = `400 34px ${F}`; x.globalAlpha = .9; x.fillText('完走証明カード', 90, 170); x.globalAlpha = 1;
+  x.font = `700 52px ${F}`; let y = 380; for (const l of wrap(c.title, 900).slice(0, 2)) { x.fillText(l, 90, y); y += 70; }
+  x.font = `800 220px ${F}`; x.fillText(`No.${c.no}`, 80, 560);
+  const w = x.measureText(`No.${c.no}`).width; x.font = `700 90px ${F}`; x.globalAlpha = .85; x.fillText(` / ${c.total}`, 80 + w, 668); x.globalAlpha = 1;
+  x.font = `700 72px ${F}`; y = 830; for (const l of wrap(c.ending, 900).slice(0, 2)) { x.fillText(l, 90, y); y += 92; }
+  x.fillStyle = 'rgba(255,255,255,0.35)'; x.fillRect(90, 1140, 900, 3); x.fillStyle = '#fff';
+  x.font = `500 44px ${F}`; if (name) x.fillText(name, 90, 1180);
+  x.font = `400 36px ${F}`; x.textAlign = 'right'; x.fillText(c.date, 990, 1186);
+  x.font = `400 28px ${F}`; x.globalAlpha = .8; x.fillText('クローズドβテスト', 990, 1250); x.globalAlpha = 1;
+  cv.toBlob((blob) => {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = `7F7S_${c.title}_No${c.no}.png`.replace(/[\\/:*?"<>|]/g, '_');
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+    $('cardMsg').textContent = '画像を保存しました。保存されない場合は、上のカードを長押し・スクリーンショットで保存してください。';
+  }, 'image/png');
 }
 
 $('sendBtn').onclick = async () => {
