@@ -17,7 +17,7 @@ for (const f of files) {
   let errs;
   if (sc.errors.length) errs = sc.errors.map((e) => `${e.line}行目：${e.msg}`);
   else {
-    const R = E.validate(sc, { limit: 2000000 });
+    const R = E.validate(sc, { limit: 5000000 });
     errs = R.errors.map((e) => `${e.msg}（例：${e.path.join(' → ')}）`);
     if (R.aborted) errs.push('全ルートの検証が最後まで終わりませんでした（分岐や履歴の参照が多すぎます）。ネロに相談してください');
   }
