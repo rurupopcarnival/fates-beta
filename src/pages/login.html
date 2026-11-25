@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>7 Fates, 7 Sparks｜クローズドβテスト</title>
+<style>
+:root{--bg:#f6f3fb;--ink:#2b2838;--sub:#6e6a80;--line:#e4dff0;--spark:#ff7a59;--fate:#5b6cff}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;padding:20px}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:26px 22px;width:100%;max-width:380px}
+h1{font-size:20px;margin:0 0 2px}
+h1 span{color:var(--fate)} h1 b{color:var(--spark)}
+p.sub{margin:0 0 20px;color:var(--sub);font-size:13px}
+label{display:block;font-size:13px;color:var(--sub);margin:12px 0 4px}
+input{width:100%;font-size:16px;padding:12px;border:1px solid var(--line);border-radius:10px}
+input:focus{outline:2px solid var(--fate);outline-offset:1px}
+button{width:100%;margin-top:18px;padding:13px;font-size:16px;font-weight:700;border:0;border-radius:12px;background:var(--ink);color:#fff}
+.err{background:#fff3f3;border-left:4px solid #d64545;padding:8px 10px;border-radius:6px;font-size:14px;margin:0 0 10px}
+.note{font-size:12px;color:var(--sub);margin-top:16px;line-height:1.6}
+</style>
+</head>
+<body>
+<form class="card" method="post" action="/login">
+  <h1><span>7 Fates</span>, <b>7 Sparks</b></h1>
+  <p class="sub">クローズドβテスト</p>
+  <!--MSG-->
+  <label for="id">ID</label>
+  <input id="id" name="id" autocomplete="username" autocapitalize="off" required>
+  <label for="pw">パスワード</label>
+  <input id="pw" name="pw" type="password" autocomplete="current-password" required>
+  <button type="submit">はじめる</button>
+  <p class="note">IDとパスワードは、ご案内のメッセージに記載しています。このページのURLとIDとパスワードは、ほかの人に教えないでください。</p>
+</form>
+</body>
+</html>

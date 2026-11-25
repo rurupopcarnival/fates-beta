@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>7 Fates, 7 Sparks｜クローズドβテスト</title>
+<style>
+:root{--bg:#f6f3fb;--card:#fff;--ink:#2b2838;--sub:#6e6a80;--line:#e4dff0;--spark:#ff7a59;--spark-bg:#fff0eb;--fate:#5b6cff;--fate-bg:#eef0ff;--ok:#1f9d6b;--err:#d64545;--r:14px}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP","Yu Gothic UI",sans-serif;-webkit-text-size-adjust:100%}
+button,select,textarea,input{font:inherit;color:inherit}
+button{cursor:pointer}
+.wrap{max-width:680px;margin:0 auto;padding:14px 14px 48px}
+.top{display:flex;align-items:baseline;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.top h1{font-size:15px;margin:0}
+.top h1 .f{color:var(--fate)} .top h1 .s{color:var(--spark)}
+.top small{color:var(--sub);font-size:12px}
+.card{background:var(--card);border-radius:var(--r);border:1px solid var(--line);padding:16px}
+.card+.card{margin-top:10px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px 14px;font-size:15px;min-height:44px}
+.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink);font-weight:700}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.wide{width:100%}
+.hidden{display:none!important}
+.muted{color:var(--sub);font-size:13px}
+h2{font-size:20px;margin:0 0 8px}
+h3{font-size:15px;margin:16px 0 6px}
+p{line-height:1.8;margin:6px 0}
+ul{margin:6px 0;padding-left:1.2em;line-height:1.8}
+.sclist{display:grid;gap:10px}
+.sc{border:1px solid var(--line);border-radius:12px;padding:12px}
+.sc .t{font-weight:700;font-size:16px}
+.sc .g{font-size:12px;color:var(--fate);letter-spacing:.06em;margin-bottom:2px}
+.sc .c{font-size:12px;color:var(--sub);margin:2px 0 8px}
+.sc .done{font-size:12px;color:var(--ok);margin-left:6px;font-weight:400}
+.credit{font-size:13px;color:var(--sub);border-top:1px solid var(--line);margin-top:12px;padding-top:10px}
+.notice{background:var(--bg);border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.7;color:var(--sub)}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row .btn{flex:1}
+/* HUD */
+.hud{display:flex;gap:8px;margin:0 0 10px;align-items:stretch}
+.meter{flex:1;min-width:0;border-radius:12px;padding:7px 10px;display:flex;align-items:center;gap:8px}
+.meter.s{background:var(--spark-bg)} .meter.f{background:var(--fate-bg)}
+.meter b{font-size:11px;letter-spacing:.08em;line-height:1.2}
+.meter b small{display:block;font-weight:400;letter-spacing:0;font-size:10px;color:var(--sub)}
+.meter.s b{color:var(--spark)} .meter.f b{color:var(--fate)}
+.dots{display:flex;gap:3px;flex-wrap:nowrap}
+.dot{width:11px;height:11px;border-radius:50%;border:2px solid currentColor;flex:none}
+.meter.s .dots{color:var(--spark)} .meter.f .dots{color:var(--fate)}
+.dot.full{background:currentColor}
+.meter .num{margin-left:auto;font-weight:700;font-size:17px}
+.story{min-height:190px;font-size:var(--fs,17px);line-height:1.9;white-space:pre-wrap;cursor:pointer;position:relative;padding-bottom:28px}
+.story .next{position:absolute;right:10px;bottom:4px;font-size:13px;color:var(--sub);animation:bob 1.2s infinite}
+@keyframes bob{50%{transform:translateY(3px)}}
+.decide{margin-top:10px}
+.decide h3{margin:0 0 8px;font-size:14px;display:flex;align-items:center;gap:8px}
+.tag{font-size:11px;font-weight:700;letter-spacing:.1em;padding:3px 8px;border-radius:6px;color:#fff;white-space:nowrap}
+.tag.s{background:var(--spark)} .tag.f{background:var(--fate)}
+.desc{background:var(--bg);border-radius:10px;padding:10px 12px;margin:0 0 10px;font-size:15px;line-height:1.7;white-space:pre-wrap}
+.choices{display:grid;gap:8px}
+.choice{text-align:left;border:2px solid var(--line);background:#fff;border-radius:12px;padding:12px 14px;font-size:16px;min-height:48px}
+.choice small{display:block;font-size:13px;color:var(--sub);margin-top:3px}
+.choice.sel{border-color:var(--spark);background:var(--spark-bg)}
+.bands{display:grid;gap:4px;margin:0 0 10px}
+.band{display:flex;gap:10px;align-items:baseline;padding:7px 10px;border-radius:10px;border:2px solid var(--line);font-size:14px;background:#fff;transition:background .2s,border-color .2s}
+.band b{min-width:3.2em;color:var(--fate);font-variant-numeric:tabular-nums}
+.band.hit{border-color:var(--fate);background:var(--fate-bg)}
+.bigval{text-align:center;font-size:44px;font-weight:800;color:var(--fate);height:56px;line-height:56px;margin-bottom:6px;transition:transform .15s}
+.bigval.empty{color:#a9a5bd;font-size:15px;font-weight:400}
+.bigval.rolling{color:#b9bff5;transform:scale(.92)}
+@keyframes land{0%{transform:scale(1.35)}100%{transform:scale(1)}}
+.bigval.landed{animation:land .25s ease-out}
+.dicebox{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.grid9{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:4px;margin-bottom:10px}
+.grid9 button{border:2px solid var(--line);background:#fff;border-radius:8px;padding:9px 0;font-size:16px;font-weight:700;min-height:44px}
+.grid9 button.sel{border-color:var(--fate);background:var(--fate);color:#fff}
+.confirm{width:100%;padding:13px;font-size:16px}
+.toolbar{display:flex;gap:6px;justify-content:flex-end;margin-top:8px;flex-wrap:wrap}
+.toolbar .btn{padding:6px 12px;font-size:13px;min-height:38px}
+.quitbar{margin-top:8px}
+/* 結果・アンケート */
+.end h2{margin:2px 0}
+table.rec{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}
+table.rec td{border-top:1px solid var(--line);padding:6px 4px;vertical-align:top}
+table.rec td:first-child{white-space:nowrap;width:1%}
+.q{border-top:1px solid var(--line);padding:14px 0 4px}
+.q:first-of-type{border-top:0}
+.q .lab{font-weight:700;font-size:15px;line-height:1.6;margin-bottom:8px}
+.q .lab small{display:block;font-weight:400;color:var(--sub);font-size:12px}
+.scale{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.scale button,.opts button{border:2px solid var(--line);background:#fff;border-radius:10px;padding:8px 4px;font-size:15px;min-height:44px}
+.scale button.on,.opts button.on{border-color:var(--fate);background:var(--fate-bg);font-weight:700}
+.ends{display:flex;justify-content:space-between;font-size:11px;color:var(--sub);margin-top:4px;gap:8px}
+.opts{display:flex;flex-wrap:wrap;gap:6px}
+.opts button{padding:8px 12px;font-size:14px}
+textarea,input[type=text]{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:16px;line-height:1.6}
+textarea{min-height:120px;resize:vertical}
+.count{text-align:right;font-size:12px;color:var(--sub)}
+.msg{border-left:4px solid;padding:8px 10px;margin:8px 0;border-radius:6px;font-size:14px}
+.msg.e{border-color:var(--err);background:#fff3f3} .msg.ok{border-color:var(--ok);background:#effaf5}
+dialog{border:0;border-radius:16px;padding:16px;max-width:min(640px,92vw);width:100%}
+dialog::backdrop{background:rgba(30,25,50,.35)}
+.log{max-height:60vh;overflow:auto;font-size:14px;line-height:1.7;white-space:pre-wrap}
+.log .ev{color:var(--sub);font-size:13px;border-left:3px solid var(--line);padding-left:8px;margin:6px 0}
+.log .ev.s{border-color:var(--spark)} .log .ev.f{border-color:var(--fate)}
+.log p{margin:6px 0}
+:focus-visible{outline:3px solid var(--fate);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.bigval.landed,.story .next{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><h1><span class="f">7 Fates</span>, <span class="s">7 Sparks</span></h1><small>クローズドβテスト</small></div>
+
+  <!-- 開始画面 -->
+  <section id="intro">
+    <div class="card">
+      <h2>ようこそ</h2>
+      <p>「7 Fates, 7 Sparks」は、<b>7回の任意選択</b>と<b>7回のダイス判定</b>によって物語が変化するストーリーゲームです。</p>
+      <p>今回のテストでは、物語の内容そのものよりも、<b>ゲームの仕組み・操作のしやすさ・選択やダイスの楽しさ</b>を確かめたいと考えています。初めて遊んだときの感想を聞かせてください。</p>
+      <p>将来は、用意されたシナリオだけでなく、<b>自分でオリジナルシナリオを作って、自由に組み込んで遊べる</b>ようにする予定です。</p>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0">遊び方</h3>
+      <ul>
+        <li>物語を読み進めると、ときどき2種類の場面が来ます。</li>
+        <li><b style="color:var(--spark)">SPARK（任意選択）</b>：あなたの意思で行動を選びます。選んでから「確定」を押します。</li>
+        <li><b style="color:var(--fate)">FATE（ダイス）</b>：ダイスの出目で運命が決まります。
+          <br>🎲 通常ダイス＝1〜6
+          <br>✨ マジックダイス＝4〜9（大きい目が出やすい）
+          <br>数字ボタン＝手元のダイスなどで出た目を1〜9から選ぶ
+          <br>大きい目がいつも良い結果とは限りません。</li>
+        <li>基本ルールでは、ダイスは振り直さずに最初に出た目で確定します。「3回まで振り直しOK」など、独自のルールで遊ぶのも自由です。</li>
+        <li>確定すると1回消費し、取り消せません。</li>
+        <li>SPARKとFATEは7回ずつ。画面上のメーターが残り回数です。使う順番は物語しだいです。</li>
+        <li>両方を使い切ったところで結末を迎えます。</li>
+        <li>途中でやめるときは、画面下の「途中でやめる」から、そこまでの感想を送れます。</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="notice">結末の画面（または途中でやめたとき）に、評価と感想を送ることができます（任意）。送信すると、<b>評価・感想</b>と<b>このプレイの記録</b>（結末、選んだ行動、出目、使ったダイスの種類、ダイスを振った回数、プレイ時間、スマホかPCか）が保存されます。<b>名前・SNSのアカウント・メールアドレスなどは記録されません。</b></div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0">シナリオを選ぶ</h3>
+      <p class="muted" style="margin-top:0">どれから遊んでも大丈夫です。いくつ遊んでも構いません。</p>
+      <div id="scList" class="sclist"><p class="muted">読み込み中…</p></div>
+    </div>
+  </section>
+
+  <!-- プレイ画面 -->
+  <section id="game" class="hidden">
+    <div class="hud">
+      <div class="meter s"><b>SPARK<small>任意選択</small></b><div class="dots" id="sDots"></div><span class="num" id="sNum"></span></div>
+      <div class="meter f"><b>FATE<small>ダイス</small></b><div class="dots" id="fDots"></div><span class="num" id="fNum"></span></div>
+    </div>
+    <div class="card">
+      <div class="story" id="story" tabindex="0"></div>
+      <div id="decide" class="decide hidden"></div>
+    </div>
+    <div class="toolbar">
+      <button class="btn" id="logBtn">バックログ</button>
+      <button class="btn" id="fsBtn">文字サイズ</button>
+      <button class="btn" id="quitBtn">途中でやめる</button>
+    </div>
+    <div class="card quitbar hidden" id="quitBar">
+      <p style="margin-top:0">途中でやめますか？ここまでの記録と感想を送ることができます。</p>
+      <div class="row"><button class="btn" id="quitNo">続ける</button><button class="btn primary" id="quitYes">やめて感想を書く</button></div>
+    </div>
+  </section>
+
+  <!-- 結果とアンケート -->
+  <section id="result" class="hidden">
+    <div class="card end" id="summary"></div>
+    <div class="card" id="formCard">
+      <h3 style="margin-top:0">評価と感想（任意）</h3>
+      <p class="muted" id="formNote">答えられる項目だけで大丈夫です。</p>
+      <div id="questions"></div>
+      <div class="q">
+        <div class="lab">⑩ 自由感想<small>よかったところ・わかりにくかったところ・気になったことなど。個人を特定できる情報は書かないでください。</small></div>
+        <textarea id="comment" maxlength="1000"></textarea>
+        <div class="count"><span id="cCount">0</span> / 1000</div>
+      </div>
+      <div class="notice" style="margin-top:8px">送信すると、評価・感想と、このプレイの記録（結末、選んだ行動、出目、使ったダイスの種類、ダイスを振った回数、プレイ時間、スマホかPCか）が保存されます。名前・SNSのアカウントなどは記録されません。</div>
+      <div id="sendMsg"></div>
+      <button class="btn primary wide" id="sendBtn" style="margin-top:10px">送信する</button>
+      <button class="btn wide" id="skipBtn" style="margin-top:8px">送信せずにシナリオ選択へ</button>
+    </div>
+    <div class="card hidden" id="thanks">
+      <h2>ありがとうございました！</h2>
+      <p>評価と感想を受け取りました。ほかのシナリオや別の結末も、ぜひ遊んでみてください。何回送っても大丈夫です。</p>
+      <button class="btn primary wide" id="againBtn">シナリオ選択へ</button>
+    </div>
+  </section>
+</div>
+
+<dialog id="logDlg">
+  <div class="row" style="justify-content:space-between;margin-bottom:8px;align-items:center"><b>バックログ</b><button class="btn" id="logClose" style="flex:none">閉じる</button></div>
+  <div class="log" id="logBody"></div>
+</dialog>
+
+<script>/*__ENGINE__*/</script>
+<script>
+{
+const E = window.F5Engine;
+const ROUND = '__ROUND__';
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const circ = (n) => n >= 0 && n <= 20 ? '⓪①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳'[n] : String(n);
+const rnd = (lo, hi) => { const a = new Uint32Array(1); crypto.getRandomValues(a); return lo + (a[0] % (hi - lo + 1)); };
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, '0')).join(''));
+const store = {
+  get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+  del(k) { try { localStorage.removeItem(k); } catch (e) {} },
+};
+const SAVE_KEY = 'fates.beta.save.' + ROUND;
+let playerId = store.get('fates.beta.player');
+if (!playerId) { playerId = uid(); store.set('fates.beta.player', playerId); }
+
+let SC = null, SC_HASH = '', SC_ID = '', LIST = [], G = null, fs = 17;
+const saveKey = (id) => SAVE_KEY + '.' + id;
+const DONE_KEY = 'fates.beta.done.' + ROUND;
+
+/* ---------- シナリオ一覧 ---------- */
+async function loadList() {
+  try {
+    const res = await fetch('/scenarios', { credentials: 'same-origin' });
+    if (res.status === 401) { location.href = '/'; return; }
+    LIST = await res.json();
+    drawList();
+  } catch (e) {
+    $('scList').innerHTML = '<p class="muted">読み込みに失敗しました。ページを再読み込みしてください。</p>';
+  }
+}
+function drawList() {
+  const done = store.get(DONE_KEY) || [];
+  $('scList').innerHTML = LIST.map((s) => {
+    const sv = store.get(saveKey(s.id));
+    return `<div class="sc"><div class="g">${esc(s.genre)}</div>
+      <div class="t">${esc(s.title)}${done.includes(s.id) ? '<span class="done">✓ 遊んだ</span>' : ''}</div>
+      <div class="c">${esc(s.credit)}</div>
+      <div class="row">${sv ? `<button class="btn" data-act="resume" data-id="${esc(s.id)}">続きから</button>` : ''}
+      <button class="btn primary" data-act="start" data-id="${esc(s.id)}">はじめから</button></div></div>`;
+  }).join('') || '<p class="muted">遊べるシナリオがありません。</p>';
+  $('scList').querySelectorAll('button[data-act]').forEach((b) => b.onclick = () => openScenario(b.dataset.id, b.dataset.act === 'resume', b));
+}
+async function openScenario(id, resume, btn) {
+  btn.disabled = true;
+  try {
+    const res = await fetch('/scenario?id=' + encodeURIComponent(id), { credentials: 'same-origin' });
+    if (res.status === 401) { location.href = '/'; return; }
+    if (!res.ok) throw new Error();
+    const text = await res.text();
+    const sc = E.parse(text);
+    if (sc.errors.length) throw new Error();
+    const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    SC = sc; SC_ID = id;
+    SC_HASH = Array.from(new Uint8Array(d), (b) => b.toString(16).padStart(2, '0')).join('').slice(0, 12);
+    const sv = store.get(saveKey(id));
+    if (resume && sv && sv.hash === SC_HASH) startGame(sv);
+    else { store.del(saveKey(id)); startGame(null); }
+  } catch (e) {
+    btn.disabled = false;
+    alertBox('シナリオの読み込みに失敗しました。もう一度お試しください。');
+  }
+}
+function alertBox(msg) { $('scList').insertAdjacentHTML('afterbegin', `<div class="msg e">${esc(msg)}</div>`); }
+loadList();
+
+const show = (id) => ['intro', 'game', 'result'].forEach((s) => $(s).classList.toggle('hidden', s !== id));
+
+/* ---------- 進行 ---------- */
+function startGame(save) {
+  G = { st: E.newState(SC), queue: [], log: [], decision: null, sel: null, how: null, rolls: 0,
+        playId: save ? save.playId : uid(), t0: save ? save.t0 : Date.now(),
+        sparks: [], fates: [], pages: 0, choices: [], dice: [] };
+  window.scrollTo(0, 0);
+  show('game'); $('quitBar').classList.add('hidden');
+  if (save) replay(save); else step();
+}
+function replay(save) {
+  // 保存した選択と出目を最初から再生して、同じ状態に戻す
+  let si = 0, fi = 0, r;
+  while (true) {
+    r = E.advance(SC, G.st);
+    r.pages.forEach((p) => G.log.push({ t: 'p', text: p }));
+    G.pages += r.pages.length;
+    if (r.type === 'spark' && si < save.choices.length) { applySpark(r, save.choices[si++]); continue; }
+    if (r.type === 'fate' && fi < save.dice.length) { const d = save.dice[fi++]; applyFate(r, d.v, d.how, d.rolls); continue; }
+    break;
+  }
+  G.decision = r; G.sel = null; G.queue = r.pages.length ? [r.pages[r.pages.length - 1]] : [];
+  drawHud(); showNext();
+}
+function step() {
+  const r = E.advance(SC, G.st);
+  G.queue = r.pages.slice(); G.decision = r; G.sel = null; G.how = null; G.rolls = 0;
+  r.pages.forEach((p) => G.log.push({ t: 'p', text: p }));
+  G.pages += r.pages.length;
+  drawHud(); showNext();
+}
+function save() {
+  store.set(saveKey(SC_ID), { hash: SC_HASH, playId: G.playId, t0: G.t0, choices: G.choices, dice: G.dice });
+}
+function applySpark(d, i) {
+  const c = E.chooseSpark(SC, G.st, i);
+  G.choices.push(i);
+  G.sparks.push({ title: d.node.title, n: i + 1, label: E.renderText(SC, G.st, c.label) });
+  G.log.push({ t: 's', title: d.node.title, label: c.label });
+}
+function applyFate(d, v, how, rolls) {
+  E.confirmFate(SC, G.st, v);
+  G.dice.push({ v, how, rolls });
+  G.fates.push({ title: d.node.title, v, how, rolls });
+  G.log.push({ t: 'f', title: d.node.title, v, how });
+}
+function showNext() {
+  const story = $('story');
+  $('decide').classList.add('hidden');
+  if (G.queue.length) {
+    story.innerHTML = esc(G.queue.shift()) + '<span class="next">▼ タップで次へ</span>';
+    story.onclick = () => showNext();
+    return;
+  }
+  story.onclick = null;
+  story.querySelector('.next')?.remove();
+  drawDecision();
+}
+$('story').addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && $('story').onclick) { e.preventDefault(); $('story').onclick(); } });
+
+function drawHud() {
+  const dots = (used, total) => Array.from({ length: total }, (_, i) => `<span class="dot ${i < total - used ? 'full' : ''}"></span>`).join('');
+  $('sDots').innerHTML = dots(G.st.s, SC.rules.S); $('sNum').textContent = circ(SC.rules.S - G.st.s);
+  $('fDots').innerHTML = dots(G.st.f, SC.rules.F); $('fNum').textContent = circ(SC.rules.F - G.st.f);
+}
+const rt = (t) => E.renderText(SC, G.st, t);
+const descHtml = (node) => node.desc && node.desc.length ? `<div class="desc">${esc(node.desc.map(rt).join('\n'))}</div>` : '';
+
+function drawDecision() {
+  const d = G.decision, box = $('decide');
+  box.classList.remove('hidden');
+  if (d.type === 'spark') {
+    box.innerHTML = `<h3><span class="tag s">SPARK</span>${esc(d.node.title)}</h3>${descHtml(d.node)}<div class="choices">${
+      d.node.choices.map((c, i) => `<button class="choice" data-i="${i}">${esc(rt(c.label))}${c.hint ? `<small>${esc(rt(c.hint))}</small>` : ''}</button>`).join('')}</div>
+      <button class="btn primary confirm" id="ok" disabled style="margin-top:10px">この選択で確定</button>`;
+    box.querySelectorAll('.choice').forEach((b) => b.onclick = () => {
+      G.sel = +b.dataset.i; box.querySelectorAll('.choice').forEach((x) => x.classList.toggle('sel', x === b)); $('ok').disabled = false;
+    });
+    $('ok').onclick = () => { applySpark(d, G.sel); save(); step(); };
+  } else if (d.type === 'fate') {
+    const labeled = d.node.bands.some((b) => b.label);
+    box.innerHTML = `<h3><span class="tag f">FATE</span>${esc(d.node.title)}</h3>${descHtml(d.node)}
+      ${labeled ? `<div class="bands">${d.node.bands.map((b, i) => `<div class="band" data-i="${i}"><b>${b.lo === b.hi ? b.lo : b.lo + '〜' + b.hi}</b><span>${esc(rt(b.label || ''))}</span></div>`).join('')}</div>` : ''}
+      <div class="bigval empty" id="big">ダイスを振るか、出目を選んでください</div>
+      <div class="dicebox"><button class="btn" id="dN">🎲 通常（1〜6）</button><button class="btn" id="dM">✨ マジック（4〜9）</button></div>
+      <div class="grid9">${[1, 2, 3, 4, 5, 6, 7, 8, 9].map((v) => `<button data-v="${v}" aria-label="出目${v}">${v}</button>`).join('')}</div>
+      <button class="btn primary confirm" id="ok" disabled>この出目で確定</button>`;
+    const pick = (v, how) => {
+      G.sel = v; G.how = how;
+      const big = $('big'); big.classList.remove('empty', 'rolling', 'landed'); big.textContent = v;
+      void big.offsetWidth; big.classList.add('landed');
+      box.querySelectorAll('.grid9 button').forEach((b) => b.classList.toggle('sel', +b.dataset.v === v));
+      box.querySelectorAll('.band').forEach((el) => { const b = d.node.bands[+el.dataset.i]; el.classList.toggle('hit', v >= b.lo && v <= b.hi); });
+      $('ok').disabled = false;
+    };
+    const roll = (lo, hi, how) => {
+      G.rolls++;
+      const final = rnd(lo, hi);
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches) return pick(final, how);
+      const btns = box.querySelectorAll('button'); btns.forEach((b) => b.disabled = true);
+      const big = $('big'); big.classList.remove('empty', 'landed'); big.classList.add('rolling');
+      let n = 0;
+      const t = setInterval(() => {
+        big.textContent = rnd(lo, hi);
+        if (++n >= 11) { clearInterval(t); btns.forEach((b) => b.disabled = false); pick(final, how); }
+      }, 55);
+    };
+    $('dN').onclick = () => roll(1, 6, '通常');
+    $('dM').onclick = () => roll(4, 9, 'マジック');
+    box.querySelectorAll('.grid9 button').forEach((b) => b.onclick = () => pick(+b.dataset.v, '手動'));
+    $('ok').onclick = () => { applyFate(d, G.sel, G.how, G.rolls); save(); step(); };
+  } else if (d.type === 'end') {
+    finish('completed', d.title);
+  } else {
+    box.innerHTML = '<div class="msg e">進行できません。お手数ですが「途中でやめる」から状況をお知らせください。</div>';
+  }
+}
+
+/* ---------- 途中でやめる ---------- */
+$('quitBtn').onclick = () => $('quitBar').classList.toggle('hidden');
+$('quitNo').onclick = () => $('quitBar').classList.add('hidden');
+$('quitYes').onclick = () => finish('quit', null);
+
+/* ---------- 結果とアンケート ---------- */
+const Q = [
+  { k: 'q1_clarity', t: '① 遊び方はわかりやすかったですか？', type: 'scale', lo: 'わかりにくい', hi: 'わかりやすい' },
+  { k: 'q2_choice_fun', t: '② 任意選択（自分で行動を選ぶ場面）は楽しかったですか？', type: 'scale', lo: '楽しくない', hi: '楽しい' },
+  { k: 'q3_dice_fun', t: '③ ダイス（ランダム選択）は楽しかったですか？ドキドキしましたか？', type: 'scale', lo: 'しなかった', hi: 'とてもした' },
+  { k: 'q4_dice_reason', t: '④ 「なぜここでダイスを振るのか」はわかりましたか？', type: 'one', opts: ['わかった', 'ときどきわからなかった', 'わからなかった'] },
+  { k: 'q5_count', t: '⑤ ダイス7回・任意選択7回という回数はどうでしたか？', type: 'one', opts: ['多い', 'ちょうどいい', '少ない'] },
+  { k: 'q6_other_endings', t: '⑥ 別の結末も見てみたいと思いましたか？', type: 'scale', lo: '思わない', hi: 'とても思う' },
+  { k: 'q7_system_fun', t: '⑦ ゲームの仕組み全体は面白かったですか？', type: 'scale', lo: '面白くない', hi: '面白い' },
+  { k: 'q8_genres', t: '⑧ 今後遊んでみたいジャンルは？（いくつでも）', type: 'multi',
+    opts: ['ミステリー・推理', 'ホラー・怪談', 'ファンタジー・魔法', '冒険・バトル', 'コメディ・ギャグ', '恋愛・ロマンス', '日常・ほのぼの', 'SF・近未来', '感動・ヒューマンドラマ', '心理戦・サスペンス', 'その他'] },
+  { k: 'q9_create', t: '⑨ 将来、自分でオリジナルシナリオを作ってみたいですか？', type: 'one', opts: ['ぜひ作ってみたい', '機会があれば作ってみたい', '遊ぶ専門でいい', 'わからない'] },
+];
+let A = {};
+function drawQuestions() {
+  A = { q8_genres: [] };
+  $('questions').innerHTML = Q.map((q) => {
+    let body = '';
+    if (q.type === 'scale') body = `<div class="scale" role="group" aria-label="${esc(q.t)}">${[1, 2, 3, 4, 5].map((v) => `<button type="button" data-k="${q.k}" data-v="${v}" aria-pressed="false">${v}</button>`).join('')}</div><div class="ends"><span>${esc(q.lo)}</span><span>${esc(q.hi)}</span></div>`;
+    else body = `<div class="opts">${q.opts.map((o) => `<button type="button" data-k="${q.k}" data-v="${esc(o)}" aria-pressed="false">${esc(o)}</button>`).join('')}</div>`;
+    if (q.k === 'q8_genres') body += `<input type="text" id="genreOther" maxlength="100" placeholder="その他の内容（任意）" style="margin-top:8px">`;
+    return `<div class="q"><div class="lab">${esc(q.t)}</div>${body}</div>`;
+  }).join('');
+  $('questions').querySelectorAll('button[data-k]').forEach((b) => b.onclick = () => {
+    const k = b.dataset.k, q = Q.find((x) => x.k === k);
+    const v = q.type === 'scale' ? +b.dataset.v : b.dataset.v;
+    if (q.type === 'multi') {
+      const i = A[k].indexOf(v); if (i >= 0) A[k].splice(i, 1); else A[k].push(v);
+      b.classList.toggle('on', i < 0); b.setAttribute('aria-pressed', String(i < 0));
+    } else {
+      A[k] = A[k] === v ? null : v;
+      $('questions').querySelectorAll(`button[data-k="${k}"]`).forEach((x) => { const on = x === b && A[k] !== null; x.classList.toggle('on', on); x.setAttribute('aria-pressed', String(on)); });
+    }
+  });
+}
+$('comment').addEventListener('input', () => { $('cCount').textContent = $('comment').value.length; });
+
+function finish(status, ending) {
+  G.status = status; G.ending = ending; G.seconds = Math.round((Date.now() - G.t0) / 1000);
+  store.del(saveKey(SC_ID));
+  if (status === 'completed') { const dn = store.get(DONE_KEY) || []; if (!dn.includes(SC_ID)) { dn.push(SC_ID); store.set(DONE_KEY, dn); } }
+  // 進行順の記録
+  const ordered = G.log.filter((e) => e.t !== 'p');
+  const recRows = ordered.map((e) => e.t === 's'
+    ? `<tr><td><span class="tag s">SPARK</span></td><td>${esc(e.title)} → <b>${esc(rt(e.label))}</b></td></tr>`
+    : `<tr><td><span class="tag f">FATE</span></td><td>${esc(e.title)} → <b>${e.v}</b> <span class="muted">（${e.how}）</span></td></tr>`).join('');
+  const m = Math.floor(G.seconds / 60), s = G.seconds % 60;
+  $('summary').innerHTML = status === 'completed'
+    ? `<div class="muted">${esc(SC.meta.title)}</div><h2>${esc(ending)}</h2>
+       <div class="muted">プレイ時間 ${m}分${s}秒 ／ 任意選択 ${G.st.s}回・ダイス ${G.st.f}回</div><table class="rec">${recRows}</table>`
+    : `<div class="muted">${esc(SC.meta.title)}</div><h2>途中でやめました</h2>
+       <div class="muted">プレイ時間 ${m}分${s}秒 ／ 任意選択 ${G.st.s}/${SC.rules.S}回・ダイス ${G.st.f}/${SC.rules.F}回</div>${recRows ? `<table class="rec">${recRows}</table>` : ''}`;
+  $('formNote').textContent = status === 'completed' ? '答えられる項目だけで大丈夫です。' : '答えられる項目だけで大丈夫です。まだ体験していない内容の項目は、空欄のままで構いません。';
+  drawQuestions();
+  $('comment').value = ''; $('cCount').textContent = '0'; $('genreOther') && ($('genreOther').value = '');
+  $('sendMsg').innerHTML = ''; $('sendBtn').disabled = false;
+  $('formCard').classList.remove('hidden'); $('thanks').classList.add('hidden');
+  show('result'); window.scrollTo(0, 0);
+}
+
+$('sendBtn').onclick = async () => {
+  const btn = $('sendBtn'); btn.disabled = true; $('sendMsg').innerHTML = '';
+  const payload = {
+    play_id: G.playId, player_id: playerId, status: G.status, scenario_id: SC_ID,
+    scenario_title: SC.meta.title, scenario_hash: SC_HASH, ending: G.ending,
+    play_seconds: G.seconds, pages: G.pages, sparks: G.sparks, fates: G.fates,
+    answers: { ...A, q8_genre_other: ($('genreOther')?.value || '').trim() },
+    comment: $('comment').value.trim(),
+    device: matchMedia('(max-width: 820px)').matches ? 'mobile' : 'pc',
+  };
+  try {
+    const res = await fetch('/api/feedback', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    if (res.status === 401) throw new Error('ログインの有効期限が切れました。ページを再読み込みして、もう一度ログインしてください（入力内容は消えてしまいます）。');
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok || !j.ok) throw new Error(j.error === 'closed' ? 'テストの受付は終了しました。' : '送信できませんでした。通信状況を確認して、もう一度お試しください。');
+    $('formCard').classList.add('hidden'); $('thanks').classList.remove('hidden'); window.scrollTo(0, 0);
+  } catch (e) {
+    $('sendMsg').innerHTML = `<div class="msg e">${esc(e.message)}</div>`; btn.disabled = false;
+  }
+};
+const backToList = () => { show('intro'); drawList(); $('scList').scrollIntoView(); };
+$('skipBtn').onclick = backToList;
+$('againBtn').onclick = backToList;
+
+/* ---------- その他 ---------- */
+$('fsBtn').onclick = () => { fs = fs >= 21 ? 15 : fs + 2; document.documentElement.style.setProperty('--fs', fs + 'px'); };
+$('logBtn').onclick = () => {
+  $('logBody').innerHTML = G.log.map((e) => e.t === 'p' ? `<p>${esc(e.text)}</p>`
+    : e.t === 's' ? `<div class="ev s">SPARK「${esc(e.title)}」→ ${esc(e.label)}</div>`
+    : `<div class="ev f">FATE「${esc(e.title)}」→ ${e.v}（${e.how}）</div>`).join('');
+  $('logDlg').showModal(); $('logBody').scrollTop = $('logBody').scrollHeight;
+};
+$('logClose').onclick = () => $('logDlg').close();
+}
+</script>
+</body>
+</html>
