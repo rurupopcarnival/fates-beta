@@ -126,7 +126,15 @@ function cleanFeedback(b, visible) {
 async function handleFeedback(request, env) {
   const len = +(request.headers.get('Content-Length') || 0);
   if (len > 64 * 1024) return json({ ok: false, error: 'too_large' }, 413);
-  let body; try { body = await request.json(); } catch { return json({ ok: false, error: 'bad_json' }, 400); }
+  // 一般βに向けて、送信の連打・機械的な大量送信を抑える（IPは判定にだけ使い、保存しない）
+  if (env.FEEDBACK_RL) {
+    const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+    const { success } = await env.FEEDBACK_RL.limit({ key: `fb:${ip}` });
+    if (!success) return json({ ok: false, error: 'rate' }, 429);
+  }
+  const raw = await request.text();
+  if (raw.length > 64 * 1024) return json({ ok: false, error: 'too_large' }, 413);
+  let body; try { body = JSON.parse(raw); } catch { return json({ ok: false, error: 'bad_json' }, 400); }
   const f = cleanFeedback(body, visibleScenarios(env));
   if (!f) return json({ ok: false, error: 'invalid' }, 400);
   const r = await env.DB.prepare(`INSERT OR IGNORE INTO feedback

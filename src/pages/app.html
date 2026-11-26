@@ -880,7 +880,7 @@ $('sendBtn').onclick = async () => {
     const res = await fetch('/api/feedback', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     if (res.status === 401) throw new Error('ログインの有効期限が切れました。ページを再読み込みして、もう一度ログインしてください（入力内容は消えてしまいます）。');
     const j = await res.json().catch(() => ({}));
-    if (!res.ok || !j.ok) throw new Error(j.error === 'closed' ? 'テストの受付は終了しました。' : '送信できませんでした。通信状況を確認して、もう一度お試しください。');
+    if (!res.ok || !j.ok) throw new Error(j.error === 'closed' ? 'テストの受付は終了しました。' : j.error === 'rate' ? '短い時間に送信が集中しています。1分ほど待ってから、もう一度「送信する」を押してください（入力内容はそのまま残っています）。' : '送信できませんでした。通信状況を確認して、もう一度お試しください。');
     $('formCard').classList.add('hidden'); $('thanks').classList.remove('hidden'); window.scrollTo(0, 0);
   } catch (e) {
     $('sendMsg').innerHTML = `<div class="msg e">${esc(e.message)}</div>`; btn.disabled = false;
