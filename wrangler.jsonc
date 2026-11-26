@@ -7,7 +7,7 @@
   "routes": [{ "pattern": "beta.rurupop.com", "custom_domain": true }],
   "vars": {
     "BETA_OPEN": "true",
-    "TEST_ROUND": "staff-check"
+    "TEST_ROUND": "beta-1"
   },
   // シークレット（wrangler secret put で設定。ここには書かない）：BETA_ID, BETA_PASSWORD, COOKIE_SECRET
   "d1_databases": [{ "binding": "DB", "database_name": "fates_beta", "database_id": "f0b4d0df-0833-4373-bbb9-8ff22be5590f" }],
