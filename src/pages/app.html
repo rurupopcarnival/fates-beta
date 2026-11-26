@@ -67,7 +67,8 @@ ul{margin:6px 0;padding-left:1.2em;line-height:1.8}
 .sb i{display:block;height:100%;background:var(--fate);transition:width .4s}
 @keyframes pul{0%{background:#fff3c4}100%{background:transparent}}
 .pulse{animation:pul .9s ease-out}
-svg.pulse{animation:none;transform:scale(1.35);transition:transform .3s}
+@keyframes pop{0%{transform:scale(1.5)}100%{transform:scale(1)}}
+svg.pulse{animation:pop .5s ease-out}
 .fxchip{position:fixed;z-index:50;pointer-events:none;background:#fff;border:2px solid var(--line);border-radius:14px;padding:8px 16px;font-size:20px;font-weight:700;box-shadow:0 6px 24px rgba(40,30,80,.18);white-space:nowrap}
 .fxchip b{font-size:26px;font-variant-numeric:tabular-nums}
 .fxchip.up{color:#0d7a52;border-color:#9fdcc2} .fxchip.dn{color:#b23434;border-color:#f0b0b0}
@@ -284,6 +285,8 @@ dialog::backdrop{background:rgba(30,25,50,.35)}
 const E = window.F5Engine;
 const ROUND = '__ROUND__';
 const $ = (id) => document.getElementById(id);
+// 本文の部分色：エスケープしてから、検証済みの色指定だけを <span> にする
+const dx = (t) => E.decorate(esc(t));
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const circ = (n) => n >= 0 && n <= 20 ? '⓪①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳'[n] : String(n);
 const rnd = (lo, hi) => { const a = new Uint32Array(1); crypto.getRandomValues(a); return lo + (a[0] % (hi - lo + 1)); };
@@ -460,7 +463,7 @@ function resolveSpark(fr, i) {
   const d = fr.r, c = E.chooseSpark(SC, G.st, i);
   fr.done = true; fr.choice = i; fr.label = E.renderText(SC, G.st, c.label);
   G.choices.push(i);
-  G.sparks.push({ title: d.node.title, n: i + 1, label: fr.label });
+  G.sparks.push({ title: d.node.title, n: i + 1, label: E.stripDeco(fr.label) });
   G.log.push({ t: 's', title: d.node.title, label: fr.label });
 }
 function resolveFate(fr, v, how, rolls) {
@@ -495,7 +498,7 @@ function render() {
   if (fr.kind === 'page') {
     box.classList.add('hidden');
     story.classList.remove('hidden'); story.style.minHeight = '';
-    story.innerHTML = esc(fr.text) + (canNext ? '<span class="next">▼ タップで次へ</span>' : '');
+    story.innerHTML = dx(fr.text) + (canNext ? '<span class="next">▼ タップで次へ</span>' : '');
     story.onclick = canNext ? () => go(1) : null;
     return;
   }
@@ -503,7 +506,7 @@ function render() {
   story.style.minHeight = '0';
   // 判定・結末のコマでは、直前の本文を残して表示する
   const prevPage = (() => { for (let i = G.pos - 1; i >= 0; i--) if (G.frames[i].kind === 'page') return G.frames[i].text; else break; return ''; })();
-  story.innerHTML = esc(prevPage);
+  story.innerHTML = dx(prevPage);
   story.classList.toggle('hidden', !prevPage);
   if (fr.kind === 'end') {
     if (G.mode === 'play') return finish('completed', fr.r.title);
@@ -619,7 +622,7 @@ async function afterConfirm(kind) {
   step(); render();
 }
 // 描画時点（そのコマ）の状態で文章を描く
-const descHtml = (fr) => fr.view.desc ? `<div class="desc">${esc(fr.view.desc)}</div>` : '';
+const descHtml = (fr) => fr.view.desc ? `<div class="desc">${dx(fr.view.desc)}</div>` : '';
 const SECRET = '運命の行方は 確定するまで明かされません。';
 // 表示行（= …）がある場合：その行だけで作る。範囲を見せている行だけをハイライトし、伏せた区分・内容・分岐数は確定後も出さない
 function dispHit(fr, i, v) {
@@ -633,11 +636,11 @@ const bandsHtml = (fr, hitV) => {
   const disp = fr.r.node.display;
   if (disp) {
     if (disp[0].kind === 'none') return hitV == null ? `<div class="secret">${SECRET}</div>` : '';
-    return `<div class="bands">${disp.map((x, i) => `<div class="band${hitV != null && dispHit(fr, i, hitV) ? ' hit' : ''}" data-d="${i}"><b>${x.kind === 'show' ? (x.lo === x.hi ? x.lo : x.lo + '〜' + x.hi) : x.kind === 'else' ? 'ほか' : '？'}</b>${fr.view.disp[i] === '🔒' ? lockHtml : `<span>${esc(fr.view.disp[i])}</span>`}</div>`).join('')}</div>`;
+    return `<div class="bands">${disp.map((x, i) => `<div class="band${hitV != null && dispHit(fr, i, hitV) ? ' hit' : ''}" data-d="${i}"><b>${x.kind === 'show' ? (x.lo === x.hi ? x.lo : x.lo + '〜' + x.hi) : x.kind === 'else' ? 'ほか' : '？'}</b>${E.stripDeco(fr.view.disp[i]).trim() === '🔒' ? lockHtml : `<span>${dx(fr.view.disp[i])}</span>`}</div>`).join('')}</div>`;
   }
   const node = fr.r.node, labeled = node.bands.some((b) => b.label);
   if (!labeled) return hitV == null ? `<div class="secret">${SECRET}</div>` : '';
-  return `<div class="bands">${node.bands.map((b, i) => `<div class="band${hitV != null && hitV >= b.lo && hitV <= b.hi ? ' hit' : ''}" data-i="${i}"><b>${b.lo === b.hi ? b.lo : b.lo + '〜' + b.hi}</b>${b.label ? `<span>${esc(fr.view.bands[i])}</span>` : `<span class="u">確定するまで明かされません</span>`}</div>`).join('')}</div>`;
+  return `<div class="bands">${node.bands.map((b, i) => `<div class="band${hitV != null && hitV >= b.lo && hitV <= b.hi ? ' hit' : ''}" data-i="${i}"><b>${b.lo === b.hi ? b.lo : b.lo + '〜' + b.hi}</b>${b.label ? `<span>${dx(fr.view.bands[i])}</span>` : `<span class="u">確定するまで明かされません</span>`}</div>`).join('')}</div>`;
 };
 
 function drawPast(fr) {
@@ -645,7 +648,7 @@ function drawPast(fr) {
   box.classList.remove('hidden');
   if (d.type === 'spark') {
     box.innerHTML = `<div class="past"><h3><span class="tag s">SPARK</span>${esc(d.node.title)}</h3><div class="choices">${
-      fr.view.choices.map((c, i) => `<div class="choice${i === fr.choice ? ' sel' : ''}">${i === fr.choice ? '✓ ' : ''}${esc(c.label)}${c.hint ? `<small>${esc(c.hint)}</small>` : ''}</div>`).join('')}</div>
+      fr.view.choices.map((c, i) => `<div class="choice${i === fr.choice ? ' sel' : ''}">${i === fr.choice ? '✓ ' : ''}${dx(c.label)}${c.hint ? `<small>${dx(c.hint)}</small>` : ''}</div>`).join('')}</div>
       <div class="note">${fr.done ? '確定済みの選択です（変更できません）。' : ''}</div></div>`;
   } else {
     box.innerHTML = `<div class="past"><h3><span class="tag f">FATE</span>${esc(d.node.title)}</h3>${bandsHtml(fr, fr.done ? fr.v : null)}
@@ -657,7 +660,7 @@ function drawDecision(fr) {
   box.classList.remove('hidden');
   if (d.type === 'spark') {
     box.innerHTML = `<h3><span class="tag s">SPARK</span>${esc(d.node.title)}</h3>${descHtml(fr)}<div class="choices">${
-      fr.view.choices.map((c, i) => `<button class="choice" data-i="${i}">${esc(c.label)}${c.hint ? `<small>${esc(c.hint)}</small>` : ''}</button>`).join('')}</div>
+      fr.view.choices.map((c, i) => `<button class="choice" data-i="${i}">${dx(c.label)}${c.hint ? `<small>${dx(c.hint)}</small>` : ''}</button>`).join('')}</div>
       <button class="btn primary confirm" id="ok" disabled style="margin-top:10px">この選択で確定</button>`;
     box.querySelectorAll('.choice').forEach((b) => b.onclick = () => {
       G.sel = +b.dataset.i; box.querySelectorAll('.choice').forEach((x) => x.classList.toggle('sel', x === b)); $('ok').disabled = false;
@@ -787,7 +790,7 @@ function finish(status, ending) {
   if (status === 'completed') { const dn = store.get(DONE_KEY) || []; if (!dn.includes(SC_ID)) { dn.push(SC_ID); store.set(DONE_KEY, dn); } }
   const ordered = G.log.filter((e) => e.t !== 'p');
   const recRows = ordered.map((e) => e.t === 's'
-    ? `<tr><td><span class="tag s">SPARK</span></td><td>${esc(e.title)} → <b>${esc(e.label)}</b></td></tr>`
+    ? `<tr><td><span class="tag s">SPARK</span></td><td>${esc(e.title)} → <b>${dx(e.label)}</b></td></tr>`
     : `<tr><td><span class="tag f">FATE</span></td><td>${esc(e.title)} → <b>${e.v}</b>${e.how && e.how !== 'コード' ? ` <span class="muted">（${esc(e.how)}）</span>` : ''}</td></tr>`).join('');
   const m = Math.floor(G.seconds / 60), s = G.seconds % 60;
   const endFr = G.frames[G.frames.length - 1];
@@ -891,8 +894,8 @@ $('reviewBack').onclick = backToList;
 /* ---------- その他 ---------- */
 $('fsBtn').onclick = () => { fs = fs >= 21 ? 15 : fs + 2; document.documentElement.style.setProperty('--fs', fs + 'px'); };
 $('logBtn').onclick = () => {
-  $('logBody').innerHTML = G.log.map((e) => e.t === 'p' ? `<p>${esc(e.text)}</p>`
-    : e.t === 's' ? `<div class="ev s">SPARK「${esc(e.title)}」→ ${esc(e.label)}</div>`
+  $('logBody').innerHTML = G.log.map((e) => e.t === 'p' ? `<p>${dx(e.text)}</p>`
+    : e.t === 's' ? `<div class="ev s">SPARK「${esc(e.title)}」→ ${dx(e.label)}</div>`
     : `<div class="ev f">FATE「${esc(e.title)}」→ ${e.v}（${e.how}）</div>`).join('');
   $('logDlg').showModal(); $('logBody').scrollTop = $('logBody').scrollHeight;
 };
