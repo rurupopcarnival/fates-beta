@@ -38,18 +38,48 @@ ul{margin:6px 0;padding-left:1.2em;line-height:1.8}
 .notice{background:var(--bg);border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.7;color:var(--sub)}
 .row{display:flex;gap:8px;flex-wrap:wrap}
 .row .btn{flex:1}
-/* HUD */
-.hud{display:flex;gap:8px;margin:0 0 10px;align-items:stretch}
-.meter{flex:1;min-width:0;border-radius:12px;padding:7px 10px;display:flex;align-items:center;gap:8px}
-.meter.s{background:var(--spark-bg)} .meter.f{background:var(--fate-bg)}
-.meter b{font-size:11px;letter-spacing:.08em;line-height:1.2}
-.meter b small{display:block;font-weight:400;letter-spacing:0;font-size:10px;color:var(--sub)}
-.meter.s b{color:var(--spark)} .meter.f b{color:var(--fate)}
-.dots{display:flex;gap:3px;flex-wrap:nowrap}
-.dot{width:11px;height:11px;border-radius:50%;border:2px solid currentColor;flex:none}
-.meter.s .dots{color:var(--spark)} .meter.f .dots{color:var(--fate)}
-.dot.full{background:currentColor}
-.meter .num{margin-left:auto;font-weight:700;font-size:17px}
+/* HUD（左：進行度／右：ステータス） */
+.hud{position:sticky;top:0;z-index:5;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;margin:0 -2px 8px;padding:6px 2px;background:var(--bg)}
+.pane{background:#fff;border:1px solid var(--line);border-radius:12px;padding:6px 8px;min-width:0}
+.pr{display:flex;align-items:center;gap:5px;height:20px}
+.pr .lb{font-size:10px;font-weight:700;letter-spacing:.06em;width:3.6em;flex:none}
+.pr.s .lb{color:var(--spark)} .pr.f .lb{color:var(--fate)}
+.slots{display:flex;gap:2px;flex:1;min-width:0}
+.slots svg{width:12px;height:12px;flex:none}
+.pr.s .slots{color:var(--spark)} .pr.f .slots{color:var(--fate)}
+.pr .n{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;flex:none}
+.gauge{display:flex;align-items:center;gap:6px;margin-top:3px}
+.gauge .bar{flex:1;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.gauge .bar span{display:block;height:100%;background:linear-gradient(90deg,var(--spark),var(--fate));transition:width .3s}
+.gauge small{font-size:10px;color:var(--sub);white-space:nowrap;font-variant-numeric:tabular-nums}
+.gauge.done small{color:var(--ok);font-weight:700}
+.stats{display:grid;gap:1px;font-size:13px;align-content:center}
+.stats .sr{display:flex;align-items:baseline;gap:4px;min-width:0}
+.stats .sr .k{color:var(--sub);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+.stats .sr .v{font-weight:700;font-variant-numeric:tabular-nums}
+.stats .sr .v small{font-weight:400;color:var(--sub);font-size:10px}
+.dl{font-size:10px;font-weight:700;border-radius:5px;padding:0 4px;font-variant-numeric:tabular-nums}
+.dl.up{color:#0d7a52;background:#e3f6ee} .dl.dn{color:#b23434;background:#fdeaea}
+.stats .none{font-size:11px;color:var(--sub);line-height:1.5}
+.review{background:#fff8e1;border:1px solid #f1d98a;border-radius:10px;padding:6px 10px;font-size:13px;margin-bottom:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.review b{flex:1}
+.nav{display:flex;gap:6px;margin-top:8px}
+.nav .btn{padding:6px 12px;font-size:13px;min-height:38px}
+.nav .sp{flex:1}
+.past .choice{opacity:.55}
+.past .choice.sel{opacity:1}
+.past .note{font-size:12px;color:var(--sub);margin-top:8px}
+.secret{background:var(--fate-bg);color:var(--fate);border-radius:10px;padding:9px 12px;font-size:14px;margin:0 0 10px;text-align:center}
+.band .u{color:var(--sub);font-size:13px}
+.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:20px;letter-spacing:.08em;font-weight:700;text-align:center;padding:10px;background:var(--bg);border-radius:10px;user-select:all}
+.cert .code{background:rgba(255,255,255,.18);color:#fff;font-size:15px;padding:6px;margin-top:10px}
+.codein{display:flex;gap:6px;margin-top:8px}
+.codein input{flex:1;min-width:0;font-family:ui-monospace,Menlo,monospace;letter-spacing:.06em}
+.codein .btn{flex:none}
+.stars{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.stars button{border:0;background:none;font-size:30px;line-height:1;padding:2px;min-width:40px;min-height:44px;color:#d9d4e8}
+.stars button.on{color:#f5b400}
+.stars .st{font-size:13px;color:var(--sub);margin-left:6px}
 .story{min-height:190px;font-size:var(--fs,17px);line-height:1.9;white-space:pre-wrap;cursor:pointer;position:relative;padding-bottom:28px}
 .story .next{position:absolute;right:10px;bottom:4px;font-size:13px;color:var(--sub);animation:bob 1.2s infinite}
 @keyframes bob{50%{transform:translateY(3px)}}
@@ -163,15 +193,22 @@ dialog::backdrop{background:rgba(30,25,50,.35)}
 
   <!-- プレイ画面 -->
   <section id="game" class="hidden">
-    <div class="hud">
-      <div class="meter s"><b>SPARK<small>任意選択</small></b><div class="dots" id="sDots"></div><span class="num" id="sNum"></span></div>
-      <div class="meter f"><b>FATE<small>ダイス</small></b><div class="dots" id="fDots"></div><span class="num" id="fNum"></span></div>
+    <div class="hud" id="hud">
+      <div class="pane">
+        <div class="pr s"><span class="lb">SPARK</span><span class="slots" id="sSlots"></span><span class="n" id="sNum"></span></div>
+        <div class="pr f"><span class="lb">FATE</span><span class="slots" id="fSlots"></span><span class="n" id="fNum"></span></div>
+        <div class="gauge" id="gauge"><div class="bar"><span id="gBar"></span></div><small id="gTxt"></small></div>
+      </div>
+      <div class="pane stats" id="stats" aria-label="ステータス"></div>
     </div>
+    <div class="review hidden" id="reviewBar"><b id="reviewTxt"></b><button class="btn" id="toNow" style="min-height:34px;padding:4px 10px;font-size:13px">いまの場面へ</button></div>
     <div class="card">
       <div class="story" id="story" tabindex="0"></div>
       <div id="decide" class="decide hidden"></div>
+      <div class="nav"><button class="btn" id="prevBtn">◀ 前へ</button><span class="sp"></span><button class="btn hidden" id="nextBtn">次へ ▶</button></div>
     </div>
     <div class="toolbar">
+      <button class="btn" id="codeBtn">BISCODE</button>
       <button class="btn" id="logBtn">バックログ</button>
       <button class="btn" id="fsBtn">文字サイズ</button>
       <button class="btn" id="quitBtn">途中でやめる</button>
@@ -199,6 +236,10 @@ dialog::backdrop{background:rgba(30,25,50,.35)}
       <button class="btn primary wide" id="sendBtn" style="margin-top:10px">送信する</button>
       <button class="btn wide" id="skipBtn" style="margin-top:8px">送信せずにシナリオ選択へ</button>
     </div>
+    <div class="card hidden" id="reviewEnd">
+      <p style="margin-top:0">振り返りは、遊んだ記録や評価には数えません。</p>
+      <button class="btn primary wide" id="reviewBack">シナリオ選択へ</button>
+    </div>
     <div class="card hidden" id="thanks">
       <h2>ありがとうございました！</h2>
       <p>評価と感想を受け取りました。ほかのシナリオや別の結末も、ぜひ遊んでみてください。何回送っても大丈夫です。</p>
@@ -207,6 +248,10 @@ dialog::backdrop{background:rgba(30,25,50,.35)}
   </section>
 </div>
 
+<dialog id="codeDlg">
+  <div class="row" style="justify-content:space-between;margin-bottom:8px;align-items:center"><b>BISCODE（途中コード）</b><button class="btn" id="codeClose" style="flex:none">閉じる</button></div>
+  <div id="codeBody"></div>
+</dialog>
 <dialog id="logDlg">
   <div class="row" style="justify-content:space-between;margin-bottom:8px;align-items:center"><b>バックログ</b><button class="btn" id="logClose" style="flex:none">閉じる</button></div>
   <div class="log" id="logBody"></div>
@@ -254,11 +299,16 @@ function drawList() {
       <div class="t">${esc(s.title)}${done.includes(s.id) ? '<span class="done">✓ 遊んだ</span>' : ''}</div>
       <div class="c">${esc(s.credit)}</div>
       <div class="row">${sv ? `<button class="btn" data-act="resume" data-id="${esc(s.id)}">続きから</button>` : ''}
-      <button class="btn primary" data-act="start" data-id="${esc(s.id)}">はじめから</button></div></div>`;
+      <button class="btn primary" data-act="start" data-id="${esc(s.id)}">はじめから</button></div>
+      <div class="codein"><input type="text" inputmode="numeric" autocomplete="off" placeholder="BISCODE（続き・振り返り）" data-code="${esc(s.id)}" aria-label="${esc(s.title)}のBISCODE"><button class="btn" data-act="code" data-id="${esc(s.id)}">読み込む</button></div>
+      <div class="cmsg" data-cmsg="${esc(s.id)}"></div></div>`;
   }).join('') || '<p class="muted">遊べるシナリオがありません。</p>';
-  $('scList').querySelectorAll('button[data-act]').forEach((b) => b.onclick = () => openScenario(b.dataset.id, b.dataset.act === 'resume', b));
+  $('scList').querySelectorAll('button[data-act]').forEach((b) => b.onclick = () => openScenario(b.dataset.id, b.dataset.act, b));
 }
-async function openScenario(id, resume, btn) {
+async function openScenario(id, act, btn) {
+  const resume = act === 'resume';
+  const cmsg = $('scList').querySelector(`[data-cmsg="${CSS.escape(id)}"]`), cin = $('scList').querySelector(`[data-code="${CSS.escape(id)}"]`);
+  if (act === 'code' && !cin.value.trim()) { cmsg.innerHTML = '<div class="msg e">BISCODEを入力してください。</div>'; return; }
   btn.disabled = true;
   try {
     const res = await fetch('/scenario?id=' + encodeURIComponent(id), { credentials: 'same-origin' });
@@ -270,8 +320,19 @@ async function openScenario(id, resume, btn) {
     const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
     SC = sc; SC_ID = id;
     SC_HASH = Array.from(new Uint8Array(d), (b) => b.toString(16).padStart(2, '0')).join('').slice(0, 12);
+    if (act === 'code') {
+      const c = readCode(cin.value);
+      btn.disabled = false;
+      if (!c.ok) { cmsg.innerHTML = `<div class="msg e">${esc(c.msg)}</div>`; return; }
+      const full = c.choices.length === SC.rules.S && c.dice.length === SC.rules.F;
+      cmsg.innerHTML = '';
+      // 完走コード＝振り返り（記録・評価には数えない）／途中コード＝その続きから新しいプレイとして遊ぶ
+      if (full) return startGame({ choices: c.choices, dice: c.dice }, { mode: 'review', from: 'code' });
+      store.del(saveKey(id));
+      return startGame({ choices: c.choices, dice: c.dice }, { mode: 'play', from: 'code' });
+    }
     const sv = store.get(saveKey(id));
-    if (resume && sv && sv.hash === SC_HASH) startGame(sv);
+    if (resume && sv && sv.hash === SC_HASH) startGame(sv, { from: 'resume' });
     else { store.del(saveKey(id)); startGame(null); }
   } catch (e) {
     btn.disabled = false;
@@ -283,88 +344,209 @@ loadList();
 
 const show = (id) => ['intro', 'game', 'result'].forEach((s) => $(s).classList.toggle('hidden', s !== id));
 
-/* ---------- 進行 ---------- */
-function startGame(save) {
-  G = { st: E.newState(SC), queue: [], log: [], decision: null, sel: null, how: null, rolls: 0,
-        playId: save ? save.playId : uid(), t0: save ? save.t0 : Date.now(),
+/* ---------- BISCODE（β） ----------
+   [形式1桁][SPARK×規定回数][FATE×規定回数][Damm検査1桁]。未確定の枠は 0。名前などは含めない。 */
+const DAMM = ['0317598642', '7092154863', '4206871359', '1750983426', '6123045978', '3674209581', '5869720134', '8945362017', '9438617205', '2581436790'].map((r) => r.split('').map(Number));
+const damm = (digits) => { let c = 0; for (const ch of digits) c = DAMM[c][+ch]; return c; };
+const CODE_FORMAT = '1';
+function makeCode(choices, dice) {
+  const S = SC.rules.S, F = SC.rules.F;
+  const sp = Array.from({ length: S }, (_, i) => (i < choices.length ? choices[i] + 1 : 0)).join('');
+  const fa = Array.from({ length: F }, (_, i) => (i < dice.length ? dice[i].v : 0)).join('');
+  const body = CODE_FORMAT + sp + fa;
+  return body + damm(body);
+}
+const fmtCode = (c) => c.replace(/(\d{4})(?=\d)/g, '$1 ');
+// 入力されたコードを読む → { ok, choices, dice, msg }
+function readCode(raw) {
+  const S = SC.rules.S, F = SC.rules.F, d = String(raw).replace(/[^0-9０-９]/g, '').replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+  if (d.length !== 1 + S + F + 1) return { ok: false, msg: `このシナリオのBISCODEは ${1 + S + F + 1} 桁です（入力：${d.length} 桁）。` };
+  if (damm(d) !== 0) return { ok: false, msg: 'BISCODEが正しくありません。数字の打ち間違いがないか確認してください。' };
+  if (d[0] !== CODE_FORMAT) return { ok: false, msg: 'このテストでは使えない形式のBISCODEです。' };
+  const sp = d.slice(1, 1 + S).split('').map(Number), fa = d.slice(1 + S, 1 + S + F).split('').map(Number);
+  const cut = (a) => { const i = a.indexOf(0); return i < 0 ? a : a.slice(0, i); };
+  const cs = cut(sp), ds = cut(fa);
+  if (sp.slice(cs.length).some((x) => x) || fa.slice(ds.length).some((x) => x)) return { ok: false, msg: 'BISCODEが正しくありません（記録の途中に空きがあります）。' };
+  return { ok: true, choices: cs.map((x) => x - 1), dice: ds.map((v) => ({ v, how: 'コード', rolls: 0 })) };
+}
+
+/* ---------- 進行 ----------
+   G.frames：本文1ページ・判定1回・結末をそれぞれ1コマとして並べる。G.pos が表示中のコマ。
+   最後のコマより前を表示している間は「読み返し」で、確定済みの選択・出目は変えられない。 */
+const snapNow = () => ({ s: G.st.s, f: G.st.f, st: { ...G.st.st }, vis: { ...G.st.vis } });
+function newG(opts) {
+  G = { st: E.newState(SC), frames: [], pos: 0, log: [], sel: null, how: null, rolls: 0,
+        playId: opts.playId || uid(), t0: opts.t0 || Date.now(), mode: opts.mode || 'play', from: opts.from || 'new',
         sparks: [], fates: [], pages: 0, choices: [], dice: [] };
+}
+function startGame(save, opts = {}) {
+  newG({ playId: save && save.playId, t0: save && save.t0, mode: opts.mode, from: opts.from || (save ? 'resume' : 'new') });
   window.scrollTo(0, 0);
   show('game'); $('quitBar').classList.add('hidden');
-  if (save) replay(save); else step();
+  $('quitBtn').classList.toggle('hidden', G.mode === 'review');
+  $('codeBtn').classList.toggle('hidden', G.mode === 'review');
+  if (save) return replay(save, opts);
+  step(); render();
 }
-function replay(save) {
-  // 保存した選択と出目を最初から再生して、同じ状態に戻す
-  let si = 0, fi = 0, r;
+// 記録した選択・出目を最初から再生する。食い違った所で止め、そこまでを再現する
+function replay(save, opts = {}) {
+  let si = 0, fi = 0, problem = null;
   while (true) {
-    r = E.advance(SC, G.st);
-    r.pages.forEach((p) => G.log.push({ t: 'p', text: p }));
-    G.pages += r.pages.length;
-    if (r.type === 'spark' && si < save.choices.length) { applySpark(r, save.choices[si++]); continue; }
-    if (r.type === 'fate' && fi < save.dice.length) { const d = save.dice[fi++]; applyFate(r, d.v, d.how, d.rolls); continue; }
+    const r = pushFrames();
+    const d = G.frames[G.frames.length - 1];
+    if (r.type === 'spark' && si < save.choices.length) {
+      const i = save.choices[si];
+      if (i < 0 || i >= r.node.choices.length) { problem = `${si + 1}回目のSPARK（${r.node.title}）`; break; }
+      si++; resolveSpark(d, i); continue;
+    }
+    if (r.type === 'fate' && fi < save.dice.length) { const x = save.dice[fi++]; resolveFate(d, x.v, x.how, x.rolls); continue; }
+    if (r.type === 'end' && (si < save.choices.length || fi < save.dice.length)) problem = 'コードの記録が結末より後まで続いている点';
+    else if (r.type !== 'end' && (si < save.choices.length || fi < save.dice.length)) problem = `${r.type === 'spark' ? 'SPARK' : 'FATE'}「${r.node ? r.node.title : ''}」の場面`;
     break;
   }
-  G.decision = r; G.sel = null; G.queue = r.pages.length ? [r.pages[r.pages.length - 1]] : [];
-  drawHud(); showNext();
+  G.pos = G.mode === 'review' ? 0 : headPos();
+  G.notice = problem ? `BISCODEの記録が、いまのシナリオと${problem}で合いませんでした。その直前まで（SPARK ${G.st.s}・FATE ${G.st.f}）を再現しています。` : null;
+  if (G.mode !== 'review' && opts.from === 'code') save_();
+  render();
 }
-function step() {
+// 次の判定・結末まで進め、本文と判定をコマとして追加
+function pushFrames() {
   const r = E.advance(SC, G.st);
-  G.queue = r.pages.slice(); G.decision = r; G.sel = null; G.how = null; G.rolls = 0;
-  r.pages.forEach((p) => G.log.push({ t: 'p', text: p }));
+  // 条件付きの行が消えた所に空行が続かないよう、3行以上の改行は2行にまとめる
+  r.pages.forEach((p, i) => { p = p.replace(/\n{3,}/g, '\n\n'); G.frames.push({ kind: 'page', text: p, snap: { s: G.st.s, f: G.st.f, ...r.snaps[i] } }); G.log.push({ t: 'p', text: p }); });
   G.pages += r.pages.length;
-  drawHud(); showNext();
+  G.frames.push({ kind: r.type, r, snap: snapNow(), done: false, view: makeView(r) });
+  return r;
 }
-function save() {
-  store.set(saveKey(SC_ID), { hash: SC_HASH, playId: G.playId, t0: G.t0, choices: G.choices, dice: G.dice });
+// 判定の表示文は、その時点の状態で描いて保存しておく（読み返しでも当時のまま）
+function makeView(r) {
+  if (!r.node) return null;
+  const rt = (t) => E.renderText(SC, G.st, t || '');
+  return { desc: (r.node.desc || []).map(rt).join('\n'), choices: (r.node.choices || []).map((c) => ({ label: rt(c.label), hint: c.hint ? rt(c.hint) : '' })), bands: (r.node.bands || []).map((b) => b.label ? rt(b.label) : '') };
 }
-function applySpark(d, i) {
-  const c = E.chooseSpark(SC, G.st, i);
+function step() { const before = G.frames.length; pushFrames(); G.pos = before; G.sel = null; G.how = null; G.rolls = 0; }
+function save_() {
+  if (G.mode === 'review') return;
+  store.set(saveKey(SC_ID), { hash: SC_HASH, playId: G.playId, t0: G.t0, choices: G.choices, dice: G.dice, from: G.from });
+}
+function resolveSpark(fr, i) {
+  const d = fr.r, c = E.chooseSpark(SC, G.st, i);
+  fr.done = true; fr.choice = i; fr.label = E.renderText(SC, G.st, c.label);
   G.choices.push(i);
-  G.sparks.push({ title: d.node.title, n: i + 1, label: E.renderText(SC, G.st, c.label) });
-  G.log.push({ t: 's', title: d.node.title, label: c.label });
+  G.sparks.push({ title: d.node.title, n: i + 1, label: fr.label });
+  G.log.push({ t: 's', title: d.node.title, label: fr.label });
 }
-function applyFate(d, v, how, rolls) {
+function resolveFate(fr, v, how, rolls) {
   E.confirmFate(SC, G.st, v);
+  fr.done = true; fr.v = v; fr.how = how;
   G.dice.push({ v, how, rolls });
-  G.fates.push({ title: d.node.title, v, how, rolls });
-  G.log.push({ t: 'f', title: d.node.title, v, how });
+  G.fates.push({ title: fr.r.node.title, v, how, rolls });
+  G.log.push({ t: 'f', title: fr.r.node.title, v, how });
 }
-function showNext() {
-  const story = $('story');
-  $('decide').classList.add('hidden');
-  if (G.queue.length) {
-    story.innerHTML = esc(G.queue.shift()) + '<span class="next">▼ タップで次へ</span>';
-    story.onclick = () => showNext();
+const isLive = () => G.mode === 'play' && G.pos === G.frames.length - 1 && !G.frames[G.pos].done && G.frames[G.pos].kind !== 'page';
+
+function render() {
+  const fr = G.frames[G.pos];
+  drawHud(fr.snap, G.pos > 0 ? G.frames[G.pos - 1].snap : null, fr.kind === 'end');
+  const story = $('story'), box = $('decide');
+  // 読み返し表示：プレイ中に「現在のコマ」より前を見ているとき、または振り返りモード
+  const head = headPos();
+  const reviewing = G.mode === 'review' || G.pos < head;
+  $('reviewBar').classList.toggle('hidden', !reviewing && !G.notice);
+  $('reviewTxt').textContent = G.notice && !reviewing ? G.notice
+    : G.mode === 'review' ? `振り返り中（${G.pos + 1} / ${G.frames.length}）：記録された選択と出目を読み返しています。変更はできません。`
+    : '読み返し中：確定済みの選択と出目は変更できません。';
+  $('toNow').classList.toggle('hidden', G.mode === 'review' || !reviewing);
+  $('prevBtn').disabled = G.pos === 0;
+  const canNext = G.pos < G.frames.length - 1 && (fr.kind === 'page' || fr.done);
+  $('nextBtn').classList.toggle('hidden', !canNext);
+  if (fr.kind === 'page') {
+    box.classList.add('hidden');
+    story.classList.remove('hidden'); story.style.minHeight = '';
+    story.innerHTML = esc(fr.text) + (canNext ? '<span class="next">▼ タップで次へ</span>' : '');
+    story.onclick = canNext ? () => go(1) : null;
     return;
   }
   story.onclick = null;
-  story.querySelector('.next')?.remove();
-  drawDecision();
+  story.style.minHeight = '0';
+  // 判定・結末のコマでは、直前の本文を残して表示する
+  const prevPage = (() => { for (let i = G.pos - 1; i >= 0; i--) if (G.frames[i].kind === 'page') return G.frames[i].text; else break; return ''; })();
+  story.innerHTML = esc(prevPage);
+  story.classList.toggle('hidden', !prevPage);
+  if (fr.kind === 'end') {
+    if (G.mode === 'play') return finish('completed', fr.r.title);
+    box.classList.remove('hidden');
+    box.innerHTML = `<h3>結末</h3><div class="desc"><b>No.${fr.r.no} / ${fr.r.total}　${esc(fr.r.title)}</b></div><button class="btn primary confirm" id="cardBtn">完走証明カードを見る</button>`;
+    $('cardBtn').onclick = () => finish('review', fr.r.title);
+    return;
+  }
+  if (fr.done || G.mode === 'review') drawPast(fr); else drawDecision(fr);
 }
+// まだ確定していない判定（または最後のコマ）の位置
+function headPos() { for (let i = 0; i < G.frames.length; i++) if (G.frames[i].kind !== 'page' && !G.frames[i].done) return i; return G.frames.length - 1; }
+function go(dir) { G.pos = Math.max(0, Math.min(G.frames.length - 1, G.pos + dir)); render(); }
+$('prevBtn').onclick = () => go(-1);
+$('nextBtn').onclick = () => go(1);
+$('toNow').onclick = () => { G.pos = headPos(); render(); };
 $('story').addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && $('story').onclick) { e.preventDefault(); $('story').onclick(); } });
 
-function drawHud() {
-  const dots = (used, total) => Array.from({ length: total }, (_, i) => `<span class="dot ${i < total - used ? 'full' : ''}"></span>`).join('');
-  $('sDots').innerHTML = dots(G.st.s, SC.rules.S); $('sNum').textContent = circ(SC.rules.S - G.st.s);
-  $('fDots').innerHTML = dots(G.st.f, SC.rules.F); $('fNum').textContent = circ(SC.rules.F - G.st.f);
+const ICON_S = (on) => `<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 .6 7.3 4.7 11.4 6 7.3 7.3 6 11.4 4.7 7.3.6 6 4.7 4.7Z" fill="${on ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/></svg>`;
+const ICON_F = (on) => `<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="1" y="1" width="10" height="10" rx="2.6" fill="${on ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.2"/><circle cx="4" cy="4" r="1" fill="${on ? '#fff' : 'currentColor'}"/><circle cx="8" cy="8" r="1" fill="${on ? '#fff' : 'currentColor'}"/></svg>`;
+const EVER_PUBLIC = () => SC.statusOrder.some((n) => SC.statuses[n].visible) || SC.order.some((n) => SC.scenes[n].items.some((it) => it.type === 'show'));
+function drawHud(snap, prev, ended) {
+  const S = SC.rules.S, F = SC.rules.F;
+  $('sSlots').innerHTML = Array.from({ length: S }, (_, i) => ICON_S(i < snap.s)).join('');
+  $('fSlots').innerHTML = Array.from({ length: F }, (_, i) => ICON_F(i < snap.f)).join('');
+  $('sNum').textContent = `${snap.s}/${S}`; $('fNum').textContent = `${snap.f}/${F}`;
+  const used = snap.s + snap.f, all = S + F;
+  $('gBar').style.width = (used / all * 100) + '%';
+  $('gauge').classList.toggle('done', !!ended);
+  $('gTxt').textContent = ended ? `完走 ${used}/${all}` : used >= all ? `${used}/${all} 結末へ` : `進行 ${used}/${all}`;
+  $('sSlots').setAttribute('aria-label', `SPARK ${snap.s}回使用・残り${S - snap.s}回`);
+  $('fSlots').setAttribute('aria-label', `FATE ${snap.f}回使用・残り${F - snap.f}回`);
+  // 公開ステータスだけを表示する（非表示のものは名前も出さない）
+  const pub = SC.statusOrder.filter((n) => snap.vis[n]);
+  if (!pub.length) { $('stats').innerHTML = `<div class="none">${EVER_PUBLIC() ? '表示中のステータスはありません。' : 'このシナリオにステータスはありません。'}</div>`; return; }
+  $('stats').innerHTML = pub.map((n) => {
+    const v = snap.st[n], def = SC.statuses[n];
+    const was = prev && prev.vis[n] ? prev.st[n] : null, dv = was == null ? 0 : v - was;
+    return `<div class="sr"><span class="k">${esc(n)}</span><span class="v">${v}${def.max != null ? `<small>/${def.max}</small>` : ''}</span>${dv ? `<span class="dl ${dv > 0 ? 'up' : 'dn'}">${dv > 0 ? '+' : '−'}${Math.abs(dv)}</span>` : ''}</div>`;
+  }).join('');
 }
-const rt = (t) => E.renderText(SC, G.st, t);
-const descHtml = (node) => node.desc && node.desc.length ? `<div class="desc">${esc(node.desc.map(rt).join('\n'))}</div>` : '';
+// 描画時点（そのコマ）の状態で文章を描く
+const descHtml = (fr) => fr.view.desc ? `<div class="desc">${esc(fr.view.desc)}</div>` : '';
+const SECRET = '運命の行方は 確定するまで明かされません。';
+const bandsHtml = (fr, hitV) => {
+  const node = fr.r.node, labeled = node.bands.some((b) => b.label);
+  if (!labeled) return hitV == null ? `<div class="secret">${SECRET}</div>` : '';
+  return `<div class="bands">${node.bands.map((b, i) => `<div class="band${hitV != null && hitV >= b.lo && hitV <= b.hi ? ' hit' : ''}" data-i="${i}"><b>${b.lo === b.hi ? b.lo : b.lo + '〜' + b.hi}</b>${b.label ? `<span>${esc(fr.view.bands[i])}</span>` : `<span class="u">確定するまで明かされません</span>`}</div>`).join('')}</div>`;
+};
 
-function drawDecision() {
-  const d = G.decision, box = $('decide');
+function drawPast(fr) {
+  const d = fr.r, box = $('decide');
   box.classList.remove('hidden');
   if (d.type === 'spark') {
-    box.innerHTML = `<h3><span class="tag s">SPARK</span>${esc(d.node.title)}</h3>${descHtml(d.node)}<div class="choices">${
-      d.node.choices.map((c, i) => `<button class="choice" data-i="${i}">${esc(rt(c.label))}${c.hint ? `<small>${esc(rt(c.hint))}</small>` : ''}</button>`).join('')}</div>
+    box.innerHTML = `<div class="past"><h3><span class="tag s">SPARK</span>${esc(d.node.title)}</h3><div class="choices">${
+      fr.view.choices.map((c, i) => `<div class="choice${i === fr.choice ? ' sel' : ''}">${i === fr.choice ? '✓ ' : ''}${esc(c.label)}${c.hint ? `<small>${esc(c.hint)}</small>` : ''}</div>`).join('')}</div>
+      <div class="note">${fr.done ? '確定済みの選択です（変更できません）。' : ''}</div></div>`;
+  } else {
+    box.innerHTML = `<div class="past"><h3><span class="tag f">FATE</span>${esc(d.node.title)}</h3>${bandsHtml(fr, fr.done ? fr.v : null)}
+      <div class="bigval">${fr.done ? fr.v : ''}</div><div class="note">${fr.done ? `確定済みの出目です${fr.how && fr.how !== 'コード' ? `（${esc(fr.how)}）` : ''}。変更できません。` : ''}</div></div>`;
+  }
+}
+function drawDecision(fr) {
+  const d = fr.r, box = $('decide');
+  box.classList.remove('hidden');
+  if (d.type === 'spark') {
+    box.innerHTML = `<h3><span class="tag s">SPARK</span>${esc(d.node.title)}</h3>${descHtml(fr)}<div class="choices">${
+      fr.view.choices.map((c, i) => `<button class="choice" data-i="${i}">${esc(c.label)}${c.hint ? `<small>${esc(c.hint)}</small>` : ''}</button>`).join('')}</div>
       <button class="btn primary confirm" id="ok" disabled style="margin-top:10px">この選択で確定</button>`;
     box.querySelectorAll('.choice').forEach((b) => b.onclick = () => {
       G.sel = +b.dataset.i; box.querySelectorAll('.choice').forEach((x) => x.classList.toggle('sel', x === b)); $('ok').disabled = false;
     });
-    $('ok').onclick = () => { applySpark(d, G.sel); save(); step(); };
+    $('ok').onclick = () => { resolveSpark(fr, G.sel); save_(); step(); render(); };
   } else if (d.type === 'fate') {
-    const labeled = d.node.bands.some((b) => b.label);
-    box.innerHTML = `<h3><span class="tag f">FATE</span>${esc(d.node.title)}</h3>${descHtml(d.node)}
-      ${labeled ? `<div class="bands">${d.node.bands.map((b, i) => `<div class="band" data-i="${i}"><b>${b.lo === b.hi ? b.lo : b.lo + '〜' + b.hi}</b><span>${esc(rt(b.label || ''))}</span></div>`).join('')}</div>` : ''}
+    box.innerHTML = `<h3><span class="tag f">FATE</span>${esc(d.node.title)}</h3>${descHtml(fr)}${bandsHtml(fr, null)}
       <div class="bigval empty" id="big">ダイスを振るか、出目を選んでください</div>
       <div class="dicebox"><button class="btn" id="dN">🎲 通常（1〜6）</button><button class="btn" id="dM">✨ マジック（4〜9）</button></div>
       <div class="grid9">${[1, 2, 3, 4, 5, 6, 7, 8, 9].map((v) => `<button data-v="${v}" aria-label="出目${v}">${v}</button>`).join('')}</div>
@@ -392,13 +574,32 @@ function drawDecision() {
     $('dN').onclick = () => roll(1, 6, '通常');
     $('dM').onclick = () => roll(4, 9, 'マジック');
     box.querySelectorAll('.grid9 button').forEach((b) => b.onclick = () => pick(+b.dataset.v, '手動'));
-    $('ok').onclick = () => { applyFate(d, G.sel, G.how, G.rolls); save(); step(); };
-  } else if (d.type === 'end') {
-    finish('completed', d.title);
+    $('ok').onclick = () => { resolveFate(fr, G.sel, G.how, G.rolls); save_(); step(); render(); };
   } else {
     box.innerHTML = '<div class="msg e">進行できません。お手数ですが「途中でやめる」から状況をお知らせください。</div>';
   }
 }
+
+/* 途中コードの表示 */
+const CODE_NOTE = 'テスト期間中は台本を改訂することがあり、改訂後は以前のBISCODEを使えないことがあります。';
+function codeBlock(code, title) {
+  return `<div class="code" id="codeTxt">${fmtCode(code)}</div>
+    <div class="row" style="margin-top:8px"><button class="btn" id="codeCopy">コピー</button></div>
+    <p class="muted" id="codeMsg">シナリオ一覧の「BISCODE」に入力すると、${title ? `「${esc(title)}」の` : ''}${'この時点から続きを遊べます'}。${CODE_NOTE}</p>`;
+}
+function bindCopy(code, text) {
+  $('codeCopy').onclick = async () => {
+    try { await navigator.clipboard.writeText(text || code); $('codeMsg').textContent = 'コピーしました。'; }
+    catch (e) { $('codeMsg').textContent = 'コピーできませんでした。上の数字を長押しして選択してください。'; }
+  };
+}
+$('codeBtn').onclick = () => {
+  const code = makeCode(G.choices, G.dice);
+  $('codeBody').innerHTML = `<p class="muted" style="margin-top:0">最後に確定したところ（SPARK ${G.st.s}・FATE ${G.st.f}）までの記録です。</p>` + codeBlock(code, SC.meta.title);
+  bindCopy(code, `7F7S「${SC.meta.title}」BISCODE ${fmtCode(code)}`);
+  $('codeDlg').showModal();
+};
+$('codeClose').onclick = () => $('codeDlg').close();
 
 /* ---------- 途中でやめる ---------- */
 $('quitBtn').onclick = () => $('quitBar').classList.toggle('hidden');
@@ -406,14 +607,15 @@ $('quitNo').onclick = () => $('quitBar').classList.add('hidden');
 $('quitYes').onclick = () => finish('quit', null);
 
 /* ---------- 結果とアンケート ---------- */
+// 5段階評価は星1〜5（v2）。旧版（数字ボタン）と集計が混ざらないよう、キー名を *_star に変えて survey_ver=2 を付ける
 const Q = [
-  { k: 'q1_clarity', t: '① 遊び方はわかりやすかったですか？', type: 'scale', lo: 'わかりにくい', hi: 'わかりやすい' },
-  { k: 'q2_choice_fun', t: '② 任意選択（自分で行動を選ぶ場面）は楽しかったですか？', type: 'scale', lo: '楽しくない', hi: '楽しい' },
-  { k: 'q3_dice_fun', t: '③ ダイス（ランダム選択）は楽しかったですか？ドキドキしましたか？', type: 'scale', lo: 'しなかった', hi: 'とてもした' },
+  { k: 'q1_clarity_star', t: '① 遊び方はわかりやすかったですか？', type: 'star', words: ['わかりにくかった', 'ややわかりにくかった', 'ふつう', 'わかりやすかった', 'とてもわかりやすかった'] },
+  { k: 'q2_choice_fun_star', t: '② 任意選択（自分で行動を選ぶ場面）は楽しかったですか？', type: 'star', words: ['楽しくなかった', 'あまり楽しくなかった', 'ふつう', '楽しかった', 'とても楽しかった'] },
+  { k: 'q3_dice_fun_star', t: '③ ダイス（ランダム選択）は楽しかったですか？ドキドキしましたか？', type: 'star', words: ['しなかった', 'あまりしなかった', 'ふつう', 'した', 'とてもした'] },
   { k: 'q4_dice_reason', t: '④ 「なぜここでダイスを振るのか」はわかりましたか？', type: 'one', opts: ['わかった', 'ときどきわからなかった', 'わからなかった'] },
   { k: 'q5_count', t: '⑤ ダイス7回・任意選択7回という回数はどうでしたか？', type: 'one', opts: ['多い', 'ちょうどいい', '少ない'] },
-  { k: 'q6_other_endings', t: '⑥ 別の結末も見てみたいと思いましたか？', type: 'scale', lo: '思わない', hi: 'とても思う' },
-  { k: 'q7_system_fun', t: '⑦ ゲームの仕組み全体は面白かったですか？', type: 'scale', lo: '面白くない', hi: '面白い' },
+  { k: 'q6_other_endings_star', t: '⑥ 別の結末も見てみたいと思いましたか？', type: 'star', words: ['思わない', 'あまり思わない', 'どちらとも言えない', '思う', 'とても思う'] },
+  { k: 'q7_system_fun_star', t: '⑦ ゲームの仕組み全体は面白かったですか？', type: 'star', words: ['面白くなかった', 'あまり面白くなかった', 'ふつう', '面白かった', 'とても面白かった'] },
   { k: 'q8_genres', t: '⑧ 今後遊んでみたいジャンルは？（いくつでも）', type: 'multi',
     opts: ['ミステリー・推理', 'ホラー・怪談', 'ファンタジー・魔法', '冒険・バトル', 'コメディ・ギャグ', '恋愛・ロマンス', '日常・ほのぼの', 'SF・近未来', '感動・ヒューマンドラマ', '心理戦・サスペンス', 'その他'] },
   { k: 'q9_create', t: '⑨ 将来、自分でオリジナルシナリオを作ってみたいですか？', type: 'one', opts: ['ぜひ作ってみたい', '機会があれば作ってみたい', '遊ぶ専門でいい', 'わからない'] },
@@ -423,14 +625,20 @@ function drawQuestions() {
   A = { q8_genres: [] };
   $('questions').innerHTML = Q.map((q) => {
     let body = '';
-    if (q.type === 'scale') body = `<div class="scale" role="group" aria-label="${esc(q.t)}">${[1, 2, 3, 4, 5].map((v) => `<button type="button" data-k="${q.k}" data-v="${v}" aria-pressed="false">${v}</button>`).join('')}</div><div class="ends"><span>${esc(q.lo)}</span><span>${esc(q.hi)}</span></div>`;
+    if (q.type === 'star') body = `<div class="stars" role="radiogroup" aria-label="${esc(q.t)}">${[1, 2, 3, 4, 5].map((v) => `<button type="button" data-k="${q.k}" data-v="${v}" role="radio" aria-checked="false" aria-label="星${v}つ：${esc(q.words[v - 1])}">★</button>`).join('')}<span class="st" data-st="${q.k}">未選択</span></div>`;
     else body = `<div class="opts">${q.opts.map((o) => `<button type="button" data-k="${q.k}" data-v="${esc(o)}" aria-pressed="false">${esc(o)}</button>`).join('')}</div>`;
     if (q.k === 'q8_genres') body += `<input type="text" id="genreOther" maxlength="100" placeholder="その他の内容（任意）" style="margin-top:8px">`;
-    return `<div class="q"><div class="lab">${esc(q.t)}</div>${body}</div>`;
+    return `<div class="q"><div class="lab">${esc(q.t)}${q.type === 'star' ? '<small>星5つがいちばん高い評価です。もう一度押すと取り消せます。</small>' : ''}</div>${body}</div>`;
   }).join('');
   $('questions').querySelectorAll('button[data-k]').forEach((b) => b.onclick = () => {
     const k = b.dataset.k, q = Q.find((x) => x.k === k);
-    const v = q.type === 'scale' ? +b.dataset.v : b.dataset.v;
+    if (q.type === 'star') {
+      const v = +b.dataset.v; A[k] = A[k] === v ? null : v;
+      $('questions').querySelectorAll(`button[data-k="${k}"]`).forEach((x) => { const on = A[k] != null && +x.dataset.v <= A[k]; x.classList.toggle('on', on); x.setAttribute('aria-checked', String(A[k] === +x.dataset.v)); });
+      $('questions').querySelector(`[data-st="${k}"]`).textContent = A[k] ? `${A[k]}　${q.words[A[k] - 1]}` : '未選択';
+      return;
+    }
+    const v = b.dataset.v;
     if (q.type === 'multi') {
       const i = A[k].indexOf(v); if (i >= 0) A[k].splice(i, 1); else A[k].push(v);
       b.classList.toggle('on', i < 0); b.setAttribute('aria-pressed', String(i < 0));
@@ -442,37 +650,51 @@ function drawQuestions() {
 }
 $('comment').addEventListener('input', () => { $('cCount').textContent = $('comment').value.length; });
 
+// status：completed（完走）／quit（途中でやめた）／review（BISCODEで振り返り。記録・評価に数えない）
 function finish(status, ending) {
+  const review = status === 'review';
   G.status = status; G.ending = ending; G.seconds = Math.round((Date.now() - G.t0) / 1000);
-  store.del(saveKey(SC_ID));
+  if (!review) store.del(saveKey(SC_ID));
   if (status === 'completed') { const dn = store.get(DONE_KEY) || []; if (!dn.includes(SC_ID)) { dn.push(SC_ID); store.set(DONE_KEY, dn); } }
-  // 進行順の記録
   const ordered = G.log.filter((e) => e.t !== 'p');
   const recRows = ordered.map((e) => e.t === 's'
-    ? `<tr><td><span class="tag s">SPARK</span></td><td>${esc(e.title)} → <b>${esc(rt(e.label))}</b></td></tr>`
-    : `<tr><td><span class="tag f">FATE</span></td><td>${esc(e.title)} → <b>${e.v}</b> <span class="muted">（${e.how}）</span></td></tr>`).join('');
+    ? `<tr><td><span class="tag s">SPARK</span></td><td>${esc(e.title)} → <b>${esc(e.label)}</b></td></tr>`
+    : `<tr><td><span class="tag f">FATE</span></td><td>${esc(e.title)} → <b>${e.v}</b>${e.how && e.how !== 'コード' ? ` <span class="muted">（${esc(e.how)}）</span>` : ''}</td></tr>`).join('');
   const m = Math.floor(G.seconds / 60), s = G.seconds % 60;
-  const no = G.decision && G.decision.no, total = G.decision && G.decision.total;
-  G.cert = { title: SC.meta.title, ending, no, total, date: new Date().toLocaleDateString('ja-JP') };
-  $('summary').innerHTML = status === 'completed'
-    ? `<div class="muted">完走証明カード</div>
+  const endFr = G.frames[G.frames.length - 1];
+  const no = endFr.r.no, total = endFr.r.total;
+  const code = makeCode(G.choices, G.dice);
+  G.cert = { title: SC.meta.title, ending, no, total, code, date: new Date().toLocaleDateString('ja-JP') };
+  const ended = status !== 'quit';
+  $('summary').innerHTML = ended
+    ? `<div class="muted">${review ? 'BISCODEの振り返り' : '完走証明カード'}</div>
        <div class="cert" id="cert"><div class="series">7 FATES, 7 SPARKS</div><div class="scn">${esc(SC.meta.title)}</div>
          <div class="no">No.${no}<small> / ${total}</small></div><div class="en">${esc(ending)}</div>
+         <div class="code">BISCODE ${fmtCode(code)}</div>
          <div class="foot"><span id="certName"></span><span>${esc(G.cert.date)}</span></div></div>
        <div class="certtools"><input type="text" id="nameIn" maxlength="20" placeholder="カードに入れる名前（任意・送信されません）"><button class="btn" id="saveCard">画像で保存</button></div>
-       <p class="muted" id="cardMsg" style="margin:0 0 8px">番号は結末ごとに決まっています。別の結末を目指して、カードを集めてみてください。</p>
-       <div class="muted">プレイ時間 ${m}分${s}秒 ／ 任意選択 ${G.st.s}回・ダイス ${G.st.f}回</div><table class="rec">${recRows}</table>`
+       <div class="row" style="margin:0 0 6px"><button class="btn" id="codeCopy">BISCODEをコピー</button>${review ? '<button class="btn" id="reread">最初から読み返す</button>' : ''}</div>
+       <p class="muted" id="codeMsg" style="margin:0 0 8px">BISCODEをシナリオ一覧で入力すると、このプレイを1ページ目から読み返せます（遊んだ記録や評価には数えません）。${CODE_NOTE}</p>
+       <p class="muted" id="cardMsg" style="margin:0 0 8px">${review ? '' : '番号は結末ごとに決まっています。別の結末を目指して、カードを集めてみてください。'}</p>
+       ${review ? '' : `<div class="muted">プレイ時間 ${m}分${s}秒 ／ 任意選択 ${G.st.s}回・ダイス ${G.st.f}回</div>`}<table class="rec">${recRows}</table>`
     : `<div class="muted">${esc(SC.meta.title)}</div><h2>途中でやめました</h2>
-       <div class="muted">プレイ時間 ${m}分${s}秒 ／ 任意選択 ${G.st.s}/${SC.rules.S}回・ダイス ${G.st.f}/${SC.rules.F}回</div>${recRows ? `<table class="rec">${recRows}</table>` : ''}`;
-  if (status === 'completed') {
+       <div class="muted">プレイ時間 ${m}分${s}秒 ／ 任意選択 ${G.st.s}/${SC.rules.S}回・ダイス ${G.st.f}/${SC.rules.F}回</div>
+       <h3>途中コード</h3>${codeBlock(code, SC.meta.title)}${recRows ? `<table class="rec">${recRows}</table>` : ''}`;
+  bindCopy(code, `7F7S「${SC.meta.title}」BISCODE ${fmtCode(code)}`);
+  if (ended) {
     $('nameIn').addEventListener('input', () => { $('certName').textContent = $('nameIn').value.trim(); });
     $('saveCard').onclick = saveCard;
+    if (review) $('reread').onclick = () => { show('game'); G.pos = 0; render(); window.scrollTo(0, 0); };
   }
-  $('formNote').textContent = status === 'completed' ? '答えられる項目だけで大丈夫です。' : '答えられる項目だけで大丈夫です。まだ体験していない内容の項目は、空欄のままで構いません。';
-  drawQuestions();
-  $('comment').value = ''; $('cCount').textContent = '0'; $('genreOther') && ($('genreOther').value = '');
-  $('sendMsg').innerHTML = ''; $('sendBtn').disabled = false;
-  $('formCard').classList.remove('hidden'); $('thanks').classList.add('hidden');
+  $('formCard').classList.toggle('hidden', review);
+  $('thanks').classList.add('hidden');
+  $('reviewEnd').classList.toggle('hidden', !review);
+  if (!review) {
+    $('formNote').textContent = status === 'completed' ? '答えられる項目だけで大丈夫です。' : '答えられる項目だけで大丈夫です。まだ体験していない内容の項目は、空欄のままで構いません。';
+    drawQuestions();
+    $('comment').value = ''; $('cCount').textContent = '0'; $('genreOther') && ($('genreOther').value = '');
+    $('sendMsg').innerHTML = ''; $('sendBtn').disabled = false;
+  }
   show('result'); window.scrollTo(0, 0);
 }
 
@@ -492,6 +714,7 @@ function saveCard() {
   x.font = `800 220px ${F}`; x.fillText(`No.${c.no}`, 80, 560);
   const w = x.measureText(`No.${c.no}`).width; x.font = `700 90px ${F}`; x.globalAlpha = .85; x.fillText(` / ${c.total}`, 80 + w, 668); x.globalAlpha = 1;
   x.font = `700 72px ${F}`; y = 830; for (const l of wrap(c.ending, 900).slice(0, 2)) { x.fillText(l, 90, y); y += 92; }
+  x.font = `600 40px ui-monospace,Menlo,monospace`; x.globalAlpha = .92; x.fillText('BISCODE  ' + fmtCode(c.code), 90, 1060); x.globalAlpha = 1;
   x.fillStyle = 'rgba(255,255,255,0.35)'; x.fillRect(90, 1140, 900, 3); x.fillStyle = '#fff';
   x.font = `500 44px ${F}`; if (name) x.fillText(name, 90, 1180);
   x.font = `400 36px ${F}`; x.textAlign = 'right'; x.fillText(c.date, 990, 1186);
@@ -511,7 +734,7 @@ $('sendBtn').onclick = async () => {
     play_id: G.playId, player_id: playerId, status: G.status, scenario_id: SC_ID,
     scenario_title: SC.meta.title, scenario_hash: SC_HASH, ending: G.ending,
     play_seconds: G.seconds, pages: G.pages, sparks: G.sparks, fates: G.fates,
-    answers: { ...A, q8_genre_other: ($('genreOther')?.value || '').trim() },
+    answers: { ...A, q8_genre_other: ($('genreOther')?.value || '').trim(), survey_ver: 2, started_from: G.from },
     comment: $('comment').value.trim(),
     device: matchMedia('(max-width: 820px)').matches ? 'mobile' : 'pc',
   };
@@ -528,6 +751,7 @@ $('sendBtn').onclick = async () => {
 const backToList = () => { show('intro'); drawList(); $('scList').scrollIntoView(); };
 $('skipBtn').onclick = backToList;
 $('againBtn').onclick = backToList;
+$('reviewBack').onclick = backToList;
 
 /* ---------- その他 ---------- */
 $('fsBtn').onclick = () => { fs = fs >= 21 ? 15 : fs + 2; document.documentElement.style.setProperty('--fs', fs + 'px'); };

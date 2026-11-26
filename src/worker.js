@@ -86,13 +86,16 @@ function cleanFeedback(b, visible) {
   const a = b.answers && typeof b.answers === 'object' ? b.answers : {};
   const scale = (v) => int(v, 1, 5);
   const answers = {
-    q1_clarity: scale(a.q1_clarity),
-    q2_choice_fun: scale(a.q2_choice_fun),
-    q3_dice_fun: scale(a.q3_dice_fun),
+    // v2：5段階は星評価（*_star）。v1（数字ボタン）の値とは混ぜない
+    survey_ver: a.survey_ver === 2 ? 2 : 1,
+    ...(a.survey_ver === 2
+      ? { q1_clarity_star: scale(a.q1_clarity_star), q2_choice_fun_star: scale(a.q2_choice_fun_star), q3_dice_fun_star: scale(a.q3_dice_fun_star),
+          q6_other_endings_star: scale(a.q6_other_endings_star), q7_system_fun_star: scale(a.q7_system_fun_star) }
+      : { q1_clarity: scale(a.q1_clarity), q2_choice_fun: scale(a.q2_choice_fun), q3_dice_fun: scale(a.q3_dice_fun),
+          q6_other_endings: scale(a.q6_other_endings), q7_system_fun: scale(a.q7_system_fun) }),
+    started_from: oneOf(a.started_from, ['new', 'resume', 'code']) || 'new',
     q4_dice_reason: oneOf(a.q4_dice_reason, ['わかった', 'ときどきわからなかった', 'わからなかった']),
     q5_count: oneOf(a.q5_count, ['多い', 'ちょうどいい', '少ない']),
-    q6_other_endings: scale(a.q6_other_endings),
-    q7_system_fun: scale(a.q7_system_fun),
     q8_genres: Array.isArray(a.q8_genres) ? [...new Set(a.q8_genres.filter((g) => GENRES.includes(g)))] : [],
     q8_genre_other: str(a.q8_genre_other, 100) || '',
     q9_create: oneOf(a.q9_create, ['ぜひ作ってみたい', '機会があれば作ってみたい', '遊ぶ専門でいい', 'わからない']),
@@ -102,7 +105,7 @@ function cleanFeedback(b, visible) {
   })) : [];
   const fates = Array.isArray(b.fates) ? b.fates.slice(0, 50).map((f) => ({
     title: str(f && f.title, 80) || '', v: int(f && f.v, 1, 9),
-    how: oneOf(f && f.how, ['通常', 'マジック', '手動']), rolls: int(f && f.rolls, 0, 999) ?? 0,
+    how: oneOf(f && f.how, ['通常', 'マジック', '手動', 'コード']), rolls: int(f && f.rolls, 0, 999) ?? 0,
   })) : [];
   const scenarioId = str(b.scenario_id, 41);
   if (!scenarioId || !visible.some((s) => s.id === scenarioId)) return null;
