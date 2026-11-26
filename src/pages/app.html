@@ -127,7 +127,10 @@ svg.pulse{animation:pop .5s ease-out}
 .grid9 button.sel{border-color:var(--fate);background:var(--fate);color:#fff}
 .confirm{width:100%;padding:13px;font-size:16px}
 .toolbar{display:flex;gap:6px;justify-content:flex-end;margin-top:8px;flex-wrap:wrap}
-.toolbar .btn{padding:6px 12px;font-size:13px;min-height:38px}
+.toolbar .btn{padding:6px 10px;font-size:13px;min-height:38px}
+.toolbar .btn.save{display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.2;padding:4px 10px}
+.toolbar .btn.save small{font-size:10px;opacity:.75}
+@media (max-width:480px){.toolbar{display:grid;grid-template-columns:1fr 1fr}}
 .quitbar{margin-top:8px}
 /* 結果・アンケート */
 .end h2{margin:2px 0}
@@ -230,7 +233,7 @@ dialog::backdrop{background:rgba(30,25,50,.35)}
       <div class="nav"><button class="btn" id="prevBtn">◀ 前へ</button><span class="sp"></span><button class="btn hidden" id="nextBtn">次へ ▶</button></div>
     </div>
     <div class="toolbar">
-      <button class="btn" id="codeBtn">BISCODE</button>
+      <button class="btn save" id="codeBtn" aria-label="途中経過を保存（BISCODEを発行）"><span>途中経過を保存</span><small>BISCODEを発行</small></button>
       <button class="btn" id="logBtn">バックログ</button>
       <button class="btn" id="fsBtn">文字サイズ</button>
       <button class="btn" id="quitBtn">途中でやめる</button>
@@ -272,7 +275,7 @@ dialog::backdrop{background:rgba(30,25,50,.35)}
 
 <div id="fxVeil" class="hidden" title="タップで演出をスキップ"></div>
 <dialog id="codeDlg">
-  <div class="row" style="justify-content:space-between;margin-bottom:8px;align-items:center"><b>BISCODE（途中コード）</b><button class="btn" id="codeClose" style="flex:none">閉じる</button></div>
+  <div class="row" style="justify-content:space-between;margin-bottom:8px;align-items:center"><b>途中経過を保存</b><button class="btn" id="codeClose" style="flex:none">閉じる</button></div>
   <div id="codeBody"></div>
 </dialog>
 <dialog id="logDlg">
@@ -716,10 +719,10 @@ function qrSvg(text) {
 }
 /* 途中コードの表示 */
 const CODE_NOTE = '同じ物語を再現するには、シナリオとBISCODEをセットで共有してください。テスト期間中は台本を改訂することがあり、改訂後は以前のBISCODEを使えないことがあります。';
-function codeBlock(code, title) {
+function codeBlock(code, title, save) {
   return `<div class="code" id="codeTxt">${fmtCode(code)}</div>
     <div class="row" style="margin-top:8px"><button class="btn" id="codeCopy">コピー</button></div>
-    <p class="muted" id="codeMsg">シナリオ一覧の「BISCODE」に入力すると、${title ? `「${esc(title)}」の` : ''}${'この時点から続きを遊べます'}。${CODE_NOTE}</p>`;
+    <p class="muted" id="codeMsg">${save ? '現在のプレイ状況をBISCODEとして保存できます。シナリオ一覧で入力すると、続きから遊べます。' : `シナリオ一覧の「BISCODE」に入力すると、${title ? `「${esc(title)}」の` : ''}この時点から続きを遊べます。`}${CODE_NOTE}</p>`;
 }
 function bindCopy(code, text) {
   $('codeCopy').onclick = async () => {
@@ -729,7 +732,7 @@ function bindCopy(code, text) {
 }
 $('codeBtn').onclick = () => {
   const code = makeCode(G.choices, G.dice);
-  $('codeBody').innerHTML = `<p class="muted" style="margin-top:0">最後に確定したところ（SPARK ${G.st.s}・FATE ${G.st.f}）までの記録です。</p>` + codeBlock(code, SC.meta.title);
+  $('codeBody').innerHTML = `<p class="muted" style="margin-top:0">最後に確定したところ（SPARK ${G.st.s}・FATE ${G.st.f}）までの記録です。</p>` + codeBlock(code, SC.meta.title, true);
   bindCopy(code, `7F7S「${SC.meta.title}」BISCODE ${fmtCode(code)}`);
   $('codeDlg').showModal();
 };
