@@ -61,6 +61,20 @@ ul{margin:6px 0;padding-left:1.2em;line-height:1.8}
 .stats .sr .v small{font-weight:400;color:var(--sub);font-size:10px}
 .dl{font-size:10px;font-weight:700;border-radius:5px;padding:0 4px;font-variant-numeric:tabular-nums}
 .dl.up{color:#0d7a52;background:#e3f6ee} .dl.dn{color:#b23434;background:#fdeaea}
+.sr{position:relative;flex-wrap:wrap;border-radius:6px}
+.sr.pre{visibility:hidden}
+.sb{flex-basis:100%;height:3px;border-radius:2px;background:var(--line);overflow:hidden;margin:1px 0 2px}
+.sb i{display:block;height:100%;background:var(--fate);transition:width .4s}
+@keyframes pul{0%{background:#fff3c4}100%{background:transparent}}
+.pulse{animation:pul .9s ease-out}
+svg.pulse{animation:none;transform:scale(1.35);transition:transform .3s}
+.fxchip{position:fixed;z-index:50;pointer-events:none;background:#fff;border:2px solid var(--line);border-radius:14px;padding:8px 16px;font-size:20px;font-weight:700;box-shadow:0 6px 24px rgba(40,30,80,.18);white-space:nowrap}
+.fxchip b{font-size:26px;font-variant-numeric:tabular-nums}
+.fxchip.up{color:#0d7a52;border-color:#9fdcc2} .fxchip.dn{color:#b23434;border-color:#f0b0b0}
+.fxchip.sp{color:var(--spark);border-color:var(--spark)} .fxchip.fa{color:var(--fate);border-color:var(--fate)}
+.fxchip.last{font-size:24px;box-shadow:0 0 0 6px rgba(255,190,60,.45),0 6px 24px rgba(40,30,80,.2)}
+.fxchip.zero{background:var(--ink);color:#fff;border-color:var(--ink)}
+#fxVeil{position:fixed;inset:0;z-index:40}
 .stats .none{font-size:11px;color:var(--sub);line-height:1.5}
 .review{background:#fff8e1;border:1px solid #f1d98a;border-radius:10px;padding:6px 10px;font-size:13px;margin-bottom:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .review b{flex:1}
@@ -253,6 +267,7 @@ dialog::backdrop{background:rgba(30,25,50,.35)}
   </section>
 </div>
 
+<div id="fxVeil" class="hidden" title="タップで演出をスキップ"></div>
 <dialog id="codeDlg">
   <div class="row" style="justify-content:space-between;margin-bottom:8px;align-items:center"><b>BISCODE（途中コード）</b><button class="btn" id="codeClose" style="flex:none">閉じる</button></div>
   <div id="codeBody"></div>
@@ -385,6 +400,7 @@ function readCode(raw) {
    最後のコマより前を表示している間は「読み返し」で、確定済みの選択・出目は変えられない。 */
 const snapNow = () => ({ s: G.st.s, f: G.st.f, st: { ...G.st.st }, vis: { ...G.st.vis } });
 function newG(opts) {
+  fxCancel();
   G = { st: E.newState(SC), frames: [], pos: 0, log: [], sel: null, how: null, rolls: 0,
         playId: opts.playId || uid(), t0: opts.t0 || Date.now(), mode: opts.mode || 'play', from: opts.from || 'new',
         sparks: [], fates: [], pages: 0, choices: [], dice: [] };
@@ -415,6 +431,7 @@ function replay(save, opts = {}) {
     break;
   }
   G.pos = G.mode === 'review' ? 0 : headPos();
+  G.seen = G.mode === 'review' ? Infinity : G.pos; // 再開直後のコマでは演出しない
   G.notice = problem ? `BISCODEの記録が、いまのシナリオと${problem}で合いませんでした。その直前まで（SPARK ${G.st.s}・FATE ${G.st.f}）を再現しています。` : null;
   if (G.mode !== 'review' && opts.from === 'code') save_();
   render();
@@ -432,7 +449,7 @@ function pushFrames() {
 function makeView(r) {
   if (!r.node) return null;
   const rt = (t) => E.renderText(SC, G.st, t || '');
-  return { desc: (r.node.desc || []).map(rt).join('\n'), choices: (r.node.choices || []).map((c) => ({ label: rt(c.label), hint: c.hint ? rt(c.hint) : '' })), bands: (r.node.bands || []).map((b) => b.label ? rt(b.label) : '') };
+  return { desc: (r.node.desc || []).map(rt).join('\n'), choices: (r.node.choices || []).map((c) => ({ label: rt(c.label), hint: c.hint ? rt(c.hint) : '' })), bands: (r.node.bands || []).map((b) => b.label ? rt(b.label) : ''), disp: (r.node.display || []).map((x) => x.text ? rt(x.text) : '') };
 }
 function step() { const before = G.frames.length; pushFrames(); G.pos = before; G.sel = null; G.how = null; G.rolls = 0; }
 function save_() {
@@ -456,8 +473,13 @@ function resolveFate(fr, v, how, rolls) {
 const isLive = () => G.mode === 'play' && G.pos === G.frames.length - 1 && !G.frames[G.pos].done && G.frames[G.pos].kind !== 'page';
 
 function render() {
-  const fr = G.frames[G.pos];
-  drawHud(fr.snap, G.pos > 0 ? G.frames[G.pos - 1].snap : null, fr.kind === 'end');
+  const fr = G.frames[G.pos], prev = G.pos > 0 ? G.frames[G.pos - 1].snap : null;
+  // 初めて表示するコマ（通常プレイ中のみ）では、公開ステータスの増減を演出する。読み返し・振り返りでは再実行しない
+  const fresh = G.mode === 'play' && G.pos > (G.seen ?? -1);
+  if (fresh) G.seen = G.pos;
+  const deltas = fresh && prev ? statDeltas(fr.snap, prev) : [];
+  drawHud(fr.snap, prev, fr.kind === 'end', deltas);
+  if (deltas.length) playStatFx(deltas, fr.snap);
   const story = $('story'), box = $('decide');
   // 読み返し表示：プレイ中に「現在のコマ」より前を見ているとき、または振り返りモード
   const head = headPos();
@@ -502,7 +524,7 @@ $('story').addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key 
 
 const ICON_S = (on) => `<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 .6 7.3 4.7 11.4 6 7.3 7.3 6 11.4 4.7 7.3.6 6 4.7 4.7Z" fill="${on ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/></svg>`;
 const ICON_F = (on) => `<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="1" y="1" width="10" height="10" rx="2.6" fill="${on ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.2"/><circle cx="4" cy="4" r="1" fill="${on ? '#fff' : 'currentColor'}"/><circle cx="8" cy="8" r="1" fill="${on ? '#fff' : 'currentColor'}"/></svg>`;
-function drawHud(snap, prev, ended) {
+function drawHud(snap, prev, ended, deltas = []) {
   const S = SC.rules.S, F = SC.rules.F;
   $('sSlots').innerHTML = Array.from({ length: S }, (_, i) => ICON_S(i < snap.s)).join('');
   $('fSlots').innerHTML = Array.from({ length: F }, (_, i) => ICON_F(i < snap.f)).join('');
@@ -519,14 +541,100 @@ function drawHud(snap, prev, ended) {
   if (!pub.length) { $('stats').innerHTML = '<div class="none">ステータスなし</div>'; return; }
   $('stats').innerHTML = pub.map((n) => {
     const v = snap.st[n], def = SC.statuses[n];
-    const was = prev && prev.vis[n] ? prev.st[n] : null, dv = was == null ? 0 : v - was;
-    return `<div class="sr"><span class="k">${esc(n)}</span><span class="v">${v}${def.max != null ? `<small>/${def.max}</small>` : ''}</span>${dv ? `<span class="dl ${dv > 0 ? 'up' : 'dn'}">${dv > 0 ? '+' : '−'}${Math.abs(dv)}</span>` : ''}</div>`;
+    // 増減は直前のコマとの差。直前は非公開だった値も、同じ操作内の変化として扱う（それより前の履歴は出さない）
+    const dv = prev ? v - prev.st[n] : 0;
+    const anim = deltas.find((d) => d.n === n);
+    const shown = anim ? anim.from : v;
+    return `<div class="sr${anim && anim.newly ? ' pre' : ''}" data-n="${esc(n)}"><span class="k">${esc(n)}</span><span class="v">${statVal(n, shown)}</span>${dv && !anim ? dlHtml(dv) : ''}${barHtml(n, shown)}</div>`;
   }).join('');
+}
+const dlHtml = (dv) => `<span class="dl ${dv > 0 ? 'up' : 'dn'}">${dv > 0 ? '+' : '−'}${Math.abs(dv)}</span>`;
+const statVal = (n, v) => { const def = SC.statuses[n]; return `${v}${def.max != null ? `<small>/${def.max}</small>` : ''}`; };
+// 上限があるステータスは小さなゲージも出す
+const barHtml = (n, v) => { const d = SC.statuses[n]; if (d.max == null) return ''; const lo = d.min ?? 0, w = Math.max(0, Math.min(100, (v - lo) / ((d.max - lo) || 1) * 100)); return `<span class="sb"><i style="width:${w}%"></i></span>`; };
+// 公開中のステータスの増減（非公開のものは対象外）。newly＝このコマで初めて公開された
+function statDeltas(cur, prev) {
+  return SC.statusOrder.filter((n) => cur.vis[n]).map((n) => ({ n, dv: cur.st[n] - prev.st[n], from: prev.vis[n] ? prev.st[n] : cur.st[n] - (cur.st[n] - prev.st[n]), to: cur.st[n], newly: !prev.vis[n] }))
+    .filter((d) => d.dv !== 0);
+}
+
+/* ---------- 演出（タップでスキップ、動きを減らす設定では短いフェードのみ） ---------- */
+const RM = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+let FX = [];
+function fxCancel() { FX.forEach((f) => f.finish()); FX = []; $('fxVeil').classList.add('hidden'); }
+$('fxVeil').onclick = () => fxCancel();
+function chip(html, cls, x, y) {
+  const el = document.createElement('div'); el.className = 'fxchip ' + (cls || ''); el.innerHTML = html;
+  document.body.appendChild(el);
+  const r = el.getBoundingClientRect(); el.style.left = (x - r.width / 2) + 'px'; el.style.top = (y - r.height / 2) + 'px';
+  return el;
+}
+// 文字を出す → 少し止める → 対象へ吸い込ませる。完了時に done() を呼ぶ
+function flyTo(el, target, delay, done) {
+  const a = el.getBoundingClientRect(), b = target ? target.getBoundingClientRect() : a;
+  const dx = b.left + b.width / 2 - (a.left + a.width / 2), dy = b.top + b.height / 2 - (a.top + a.height / 2);
+  const kf = RM() ? [{ opacity: 0 }, { opacity: 1, offset: .2 }, { opacity: 1, offset: .8 }, { opacity: 0 }]
+    : [{ opacity: 0, transform: 'scale(.6)' }, { opacity: 1, transform: 'scale(1)', offset: .15 }, { opacity: 1, transform: 'scale(1)', offset: .6 }, { opacity: 0, transform: `translate(${dx}px,${dy}px) scale(.25)` }];
+  const an = el.animate(kf, { duration: RM() ? 900 : 1300, delay, easing: 'ease-in-out', fill: 'forwards' });
+  FX.push(an);
+  $('fxVeil').classList.remove('hidden');
+  const end = () => { el.remove(); done && done(); FX = FX.filter((f) => f !== an); if (!FX.length) $('fxVeil').classList.add('hidden'); };
+  an.onfinish = end; an.oncancel = end;
+  return an.finished.catch(() => {});
+}
+function pulse(el) { if (!el) return; el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse'); }
+function storyCenter() { const r = $('story').closest('.card').getBoundingClientRect(); return [r.left + r.width / 2, Math.max(120, Math.min(innerHeight - 80, r.top + Math.min(r.height, 260) / 2))]; }
+function playStatFx(deltas, snap) {
+  const [cx, cy] = storyCenter();
+  deltas.forEach((d, i) => {
+    const el = chip(`${esc(d.n)} <b>${d.dv > 0 ? '＋' : '−'}${Math.abs(d.dv)}</b>`, d.dv > 0 ? 'up' : 'dn', cx, cy + (i - (deltas.length - 1) / 2) * 52);
+    const row = $('stats').querySelector(`.sr[data-n="${CSS.escape(d.n)}"]`);
+    flyTo(el, row, i * 140, () => {
+      if (!row || !row.isConnected) return;
+      row.classList.remove('pre');
+      row.querySelector('.v').innerHTML = statVal(d.n, d.to);
+      const sb = row.querySelector('.sb'); if (sb) sb.outerHTML = barHtml(d.n, d.to);
+      if (!row.querySelector('.dl')) row.querySelector('.v').insertAdjacentHTML('afterend', dlHtml(d.dv));
+      pulse(row);
+    });
+  });
+}
+// SPARK/FATE確定：「SPARK あと1」などを出して進行度のアイコンへ吸い込ませる
+function playUseFx(kind) {
+  const S = kind === 's', used = S ? G.st.s : G.st.f, total = S ? SC.rules.S : SC.rules.F, left = total - used;
+  const name = S ? 'SPARK' : 'FATE';
+  const [cx, cy] = storyCenter();
+  const el = chip(left > 0 ? `${name} あと<b>${left}</b>` : `${name} <b>使い切り</b>`, (S ? 'sp' : 'fa') + (left === 1 ? ' last' : left === 0 ? ' zero' : ''), cx, cy);
+  const slot = $(S ? 'sSlots' : 'fSlots').children[used - 1];
+  return flyTo(el, slot, 0, () => {
+    const sl = $(S ? 'sSlots' : 'fSlots'); if (sl.children[used - 1]) sl.children[used - 1].outerHTML = (S ? ICON_S : ICON_F)(true);
+    $(S ? 'sNum' : 'fNum').textContent = `${used}/${total}`;
+    pulse(sl.children[used - 1]); pulse($(S ? 'sNum' : 'fNum'));
+  });
+}
+async function afterConfirm(kind) {
+  $('ok').disabled = true; $('decide').querySelectorAll('button').forEach((b) => b.disabled = true);
+  save_();
+  await playUseFx(kind);
+  step(); render();
 }
 // 描画時点（そのコマ）の状態で文章を描く
 const descHtml = (fr) => fr.view.desc ? `<div class="desc">${esc(fr.view.desc)}</div>` : '';
 const SECRET = '運命の行方は 確定するまで明かされません。';
+// 表示行（= …）がある場合：その行だけで作る。範囲を見せている行だけをハイライトし、伏せた区分・内容・分岐数は確定後も出さない
+function dispHit(fr, i, v) {
+  const d = fr.r.node.display, x = d[i];
+  if (x.kind === 'show') return v >= x.lo && v <= x.hi;
+  if (x.kind === 'else') return d.every((y) => y.kind === 'show' || y.kind === 'else') && !d.some((y) => y.kind === 'show' && v >= y.lo && v <= y.hi);
+  return false;
+}
+const lockHtml = '<span class="u">🔒 確定するまで明かされません</span>';
 const bandsHtml = (fr, hitV) => {
+  const disp = fr.r.node.display;
+  if (disp) {
+    if (disp[0].kind === 'none') return hitV == null ? `<div class="secret">${SECRET}</div>` : '';
+    return `<div class="bands">${disp.map((x, i) => `<div class="band${hitV != null && dispHit(fr, i, hitV) ? ' hit' : ''}" data-d="${i}"><b>${x.kind === 'show' ? (x.lo === x.hi ? x.lo : x.lo + '〜' + x.hi) : x.kind === 'else' ? 'ほか' : '？'}</b>${fr.view.disp[i] === '🔒' ? lockHtml : `<span>${esc(fr.view.disp[i])}</span>`}</div>`).join('')}</div>`;
+  }
   const node = fr.r.node, labeled = node.bands.some((b) => b.label);
   if (!labeled) return hitV == null ? `<div class="secret">${SECRET}</div>` : '';
   return `<div class="bands">${node.bands.map((b, i) => `<div class="band${hitV != null && hitV >= b.lo && hitV <= b.hi ? ' hit' : ''}" data-i="${i}"><b>${b.lo === b.hi ? b.lo : b.lo + '〜' + b.hi}</b>${b.label ? `<span>${esc(fr.view.bands[i])}</span>` : `<span class="u">確定するまで明かされません</span>`}</div>`).join('')}</div>`;
@@ -554,7 +662,7 @@ function drawDecision(fr) {
     box.querySelectorAll('.choice').forEach((b) => b.onclick = () => {
       G.sel = +b.dataset.i; box.querySelectorAll('.choice').forEach((x) => x.classList.toggle('sel', x === b)); $('ok').disabled = false;
     });
-    $('ok').onclick = () => { resolveSpark(fr, G.sel); save_(); step(); render(); };
+    $('ok').onclick = () => { if ($('ok').disabled) return; resolveSpark(fr, G.sel); afterConfirm('s'); };
   } else if (d.type === 'fate') {
     box.innerHTML = `<h3><span class="tag f">FATE</span>${esc(d.node.title)}</h3>${descHtml(fr)}${bandsHtml(fr, null)}
       <div class="bigval empty" id="big">ダイスを振るか、出目を選んでください</div>
@@ -566,7 +674,10 @@ function drawDecision(fr) {
       const big = $('big'); big.classList.remove('empty', 'rolling', 'landed'); big.textContent = v;
       void big.offsetWidth; big.classList.add('landed');
       box.querySelectorAll('.grid9 button').forEach((b) => b.classList.toggle('sel', +b.dataset.v === v));
-      box.querySelectorAll('.band').forEach((el) => { const b = d.node.bands[+el.dataset.i]; el.classList.toggle('hit', v >= b.lo && v <= b.hi); });
+      box.querySelectorAll('.band').forEach((el) => {
+        if (el.dataset.d != null) return el.classList.toggle('hit', dispHit(fr, +el.dataset.d, v));
+        const b = d.node.bands[+el.dataset.i]; el.classList.toggle('hit', v >= b.lo && v <= b.hi);
+      });
       $('ok').disabled = false;
     };
     const roll = (lo, hi, how) => {
@@ -584,7 +695,7 @@ function drawDecision(fr) {
     $('dN').onclick = () => roll(1, 6, '通常');
     $('dM').onclick = () => roll(4, 9, 'マジック');
     box.querySelectorAll('.grid9 button').forEach((b) => b.onclick = () => pick(+b.dataset.v, '手動'));
-    $('ok').onclick = () => { resolveFate(fr, G.sel, G.how, G.rolls); save_(); step(); render(); };
+    $('ok').onclick = () => { if ($('ok').disabled) return; resolveFate(fr, G.sel, G.how, G.rolls); afterConfirm('f'); };
   } else {
     box.innerHTML = '<div class="msg e">進行できません。お手数ですが「途中でやめる」から状況をお知らせください。</div>';
   }
