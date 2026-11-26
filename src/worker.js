@@ -68,7 +68,9 @@ async function handleLogin(request, env) {
   const id = String(form.get('id') || '').trim(), pw = String(form.get('pw') || '');
   const ok = safeEqual(await sha256Hex(id), await sha256Hex(env.BETA_ID)) & safeEqual(await sha256Hex(pw), await sha256Hex(env.BETA_PASSWORD));
   if (!ok) return html(LOGIN_HTML.replace('<!--MSG-->', '<p class="err">IDまたはパスワードが違います。</p>'), 401);
-  return new Response(null, { status: 303, headers: { ...baseHeaders, Location: '/', 'Set-Cookie': await makeCookie(env) } });
+  const next = new URL(request.url).searchParams.get('s');
+  const loc = next && /^[a-z0-9-]{1,40}$/.test(next) ? '/?s=' + next : '/';
+  return new Response(null, { status: 303, headers: { ...baseHeaders, Location: loc, 'Set-Cookie': await makeCookie(env) } });
 }
 
 // ---------- 評価・プレイ記録の検証 ----------

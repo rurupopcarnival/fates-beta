@@ -33,6 +33,7 @@ ul{margin:6px 0;padding-left:1.2em;line-height:1.8}
 .sc .t{font-weight:700;font-size:16px}
 .sc .g{font-size:12px;color:var(--fate);letter-spacing:.06em;margin-bottom:2px}
 .sc .c{font-size:12px;color:var(--sub);margin:2px 0 8px}
+.sc.want{border-color:var(--fate);box-shadow:0 0 0 3px var(--fate-bg)}
 .sc .done{font-size:12px;color:var(--ok);margin-left:6px;font-weight:400}
 .credit{font-size:13px;color:var(--sub);border-top:1px solid var(--line);margin-top:12px;padding-top:10px}
 .notice{background:var(--bg);border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.7;color:var(--sub)}
@@ -72,6 +73,10 @@ ul{margin:6px 0;padding-left:1.2em;line-height:1.8}
 .secret{background:var(--fate-bg);color:var(--fate);border-radius:10px;padding:9px 12px;font-size:14px;margin:0 0 10px;text-align:center}
 .band .u{color:var(--sub);font-size:13px}
 .code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:20px;letter-spacing:.08em;font-weight:700;text-align:center;padding:10px;background:var(--bg);border-radius:10px;user-select:all}
+.qrrow{display:flex;align-items:center;gap:10px;margin-top:10px}
+.qrrow .qr{width:76px;height:76px;flex:none;border-radius:6px;overflow:hidden}
+.qrrow .qr svg{width:100%;height:100%;display:block}
+.qrrow small{font-size:11px;opacity:.9;line-height:1.5}
 .cert .code{background:rgba(255,255,255,.18);color:#fff;font-size:15px;padding:6px;margin-top:10px}
 .codein{display:flex;gap:6px;margin-top:8px}
 .codein input{flex:1;min-width:0;font-family:ui-monospace,Menlo,monospace;letter-spacing:.06em}
@@ -258,6 +263,7 @@ dialog::backdrop{background:rgba(30,25,50,.35)}
 </dialog>
 
 <script>/*__ENGINE__*/</script>
+<script>/*__QR__*/</script>
 <script>
 {
 const E = window.F5Engine;
@@ -304,6 +310,10 @@ function drawList() {
       <div class="cmsg" data-cmsg="${esc(s.id)}"></div></div>`;
   }).join('') || '<p class="muted">遊べるシナリオがありません。</p>';
   $('scList').querySelectorAll('button[data-act]').forEach((b) => b.onclick = () => openScenario(b.dataset.id, b.dataset.act, b));
+  // QRなど ?s=シナリオID で開いたときは、そのシナリオを目立たせる
+  const want = new URLSearchParams(location.search).get('s');
+  const card = want && $('scList').querySelector(`[data-code="${CSS.escape(want)}"]`);
+  if (card && !drawList.done) { drawList.done = true; const box = card.closest('.sc'); box.classList.add('want'); box.scrollIntoView({ block: 'center' }); }
 }
 async function openScenario(id, act, btn) {
   const resume = act === 'resume';
@@ -492,7 +502,6 @@ $('story').addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key 
 
 const ICON_S = (on) => `<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 .6 7.3 4.7 11.4 6 7.3 7.3 6 11.4 4.7 7.3.6 6 4.7 4.7Z" fill="${on ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/></svg>`;
 const ICON_F = (on) => `<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="1" y="1" width="10" height="10" rx="2.6" fill="${on ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.2"/><circle cx="4" cy="4" r="1" fill="${on ? '#fff' : 'currentColor'}"/><circle cx="8" cy="8" r="1" fill="${on ? '#fff' : 'currentColor'}"/></svg>`;
-const EVER_PUBLIC = () => SC.statusOrder.some((n) => SC.statuses[n].visible) || SC.order.some((n) => SC.scenes[n].items.some((it) => it.type === 'show'));
 function drawHud(snap, prev, ended) {
   const S = SC.rules.S, F = SC.rules.F;
   $('sSlots').innerHTML = Array.from({ length: S }, (_, i) => ICON_S(i < snap.s)).join('');
@@ -506,7 +515,8 @@ function drawHud(snap, prev, ended) {
   $('fSlots').setAttribute('aria-label', `FATE ${snap.f}回使用・残り${F - snap.f}回`);
   // 公開ステータスだけを表示する（非表示のものは名前も出さない）
   const pub = SC.statusOrder.filter((n) => snap.vis[n]);
-  if (!pub.length) { $('stats').innerHTML = `<div class="none">${EVER_PUBLIC() ? '表示中のステータスはありません。' : 'このシナリオにステータスはありません。'}</div>`; return; }
+  // 公開中が0件なら理由を区別せず一律「ステータスなし」（隠し値の存在を匂わせない）
+  if (!pub.length) { $('stats').innerHTML = '<div class="none">ステータスなし</div>'; return; }
   $('stats').innerHTML = pub.map((n) => {
     const v = snap.st[n], def = SC.statuses[n];
     const was = prev && prev.vis[n] ? prev.st[n] : null, dv = was == null ? 0 : v - was;
@@ -580,8 +590,16 @@ function drawDecision(fr) {
   }
 }
 
+/* 完走カードのQR：このシナリオを直接開くURL（BISCODEは含めない） */
+const scenarioUrl = () => location.origin + '/?s=' + encodeURIComponent(SC_ID);
+function qrMatrix(text) { const q = qrcode(0, 'M'); q.addData(text); q.make(); const n = q.getModuleCount(); return { n, dark: (r, c) => q.isDark(r, c) }; }
+function qrSvg(text) {
+  const m = qrMatrix(text); let d = '';
+  for (let r = 0; r < m.n; r++) for (let c = 0; c < m.n; c++) if (m.dark(r, c)) d += `M${c + 2} ${r + 2}h1v1h-1z`;
+  return `<svg viewBox="0 0 ${m.n + 4} ${m.n + 4}" shape-rendering="crispEdges" role="img" aria-label="このシナリオのQRコード"><rect width="100%" height="100%" fill="#fff"/><path d="${d}" fill="#2b2838"/></svg>`;
+}
 /* 途中コードの表示 */
-const CODE_NOTE = 'テスト期間中は台本を改訂することがあり、改訂後は以前のBISCODEを使えないことがあります。';
+const CODE_NOTE = '同じ物語を再現するには、シナリオとBISCODEをセットで共有してください。テスト期間中は台本を改訂することがあり、改訂後は以前のBISCODEを使えないことがあります。';
 function codeBlock(code, title) {
   return `<div class="code" id="codeTxt">${fmtCode(code)}</div>
     <div class="row" style="margin-top:8px"><button class="btn" id="codeCopy">コピー</button></div>
@@ -671,6 +689,7 @@ function finish(status, ending) {
        <div class="cert" id="cert"><div class="series">7 FATES, 7 SPARKS</div><div class="scn">${esc(SC.meta.title)}</div>
          <div class="no">No.${no}<small> / ${total}</small></div><div class="en">${esc(ending)}</div>
          <div class="code">BISCODE ${fmtCode(code)}</div>
+         <div class="qrrow"><div class="qr">${qrSvg(scenarioUrl())}</div><small>読み取ると<br>このシナリオを開けます</small></div>
          <div class="foot"><span id="certName"></span><span>${esc(G.cert.date)}</span></div></div>
        <div class="certtools"><input type="text" id="nameIn" maxlength="20" placeholder="カードに入れる名前（任意・送信されません）"><button class="btn" id="saveCard">画像で保存</button></div>
        <div class="row" style="margin:0 0 6px"><button class="btn" id="codeCopy">BISCODEをコピー</button>${review ? '<button class="btn" id="reread">最初から読み返す</button>' : ''}</div>
@@ -706,15 +725,20 @@ function saveCard() {
   x.fillStyle = g; x.fillRect(0, 0, W, H);
   x.fillStyle = 'rgba(255,255,255,0.10)'; for (let i = 0; i < 7; i++) { x.beginPath(); x.arc(990 - i * 12, 200 + i * 70, 14 + i * 5, 0, Math.PI * 2); x.fill(); }
   const F = '"Hiragino Sans","Noto Sans JP","Yu Gothic",sans-serif';
-  const wrap = (t, maxW) => { const lines = []; let cur = ''; for (const ch of t) { if (x.measureText(cur + ch).width > maxW && cur) { lines.push(cur); cur = ch; } else cur += ch; } if (cur) lines.push(cur); return lines; };
+  // 英単語の途中では折り返さない
+  const wrap = (t, maxW) => { const lines = []; let cur = ''; for (const tk of t.match(/[A-Za-z0-9'’.,!?-]+|\s+|./gu) || []) { if (x.measureText(cur + tk).width > maxW && cur.trim()) { lines.push(cur.trimEnd()); cur = tk.trimStart(); } else cur += tk; } if (cur.trim()) lines.push(cur.trimEnd()); return lines; };
   x.fillStyle = '#fff'; x.textBaseline = 'top';
   x.font = `600 40px ${F}`; x.fillText('7 FATES, 7 SPARKS', 90, 110);
   x.font = `400 34px ${F}`; x.globalAlpha = .9; x.fillText('完走証明カード', 90, 170); x.globalAlpha = 1;
   x.font = `700 52px ${F}`; let y = 380; for (const l of wrap(c.title, 900).slice(0, 2)) { x.fillText(l, 90, y); y += 70; }
   x.font = `800 220px ${F}`; x.fillText(`No.${c.no}`, 80, 560);
   const w = x.measureText(`No.${c.no}`).width; x.font = `700 90px ${F}`; x.globalAlpha = .85; x.fillText(` / ${c.total}`, 80 + w, 668); x.globalAlpha = 1;
-  x.font = `700 72px ${F}`; y = 830; for (const l of wrap(c.ending, 900).slice(0, 2)) { x.fillText(l, 90, y); y += 92; }
+  x.font = `700 72px ${F}`; y = 830; for (const l of wrap(c.ending, 670).slice(0, 2)) { x.fillText(l, 90, y); y += 92; }
   x.font = `600 40px ui-monospace,Menlo,monospace`; x.globalAlpha = .92; x.fillText('BISCODE  ' + fmtCode(c.code), 90, 1060); x.globalAlpha = 1;
+  { const m = qrMatrix(scenarioUrl()), sz = 200, cell = sz / (m.n + 4), qx = 790, qy = 820;
+    x.fillStyle = '#fff'; x.fillRect(qx, qy, sz, sz); x.fillStyle = '#2b2838';
+    for (let r = 0; r < m.n; r++) for (let cc = 0; cc < m.n; cc++) if (m.dark(r, cc)) x.fillRect(qx + (cc + 2) * cell, qy + (r + 2) * cell, Math.ceil(cell), Math.ceil(cell));
+    x.fillStyle = '#fff'; }
   x.fillStyle = 'rgba(255,255,255,0.35)'; x.fillRect(90, 1140, 900, 3); x.fillStyle = '#fff';
   x.font = `500 44px ${F}`; if (name) x.fillText(name, 90, 1180);
   x.font = `400 36px ${F}`; x.textAlign = 'right'; x.fillText(c.date, 990, 1186);

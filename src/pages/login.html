@@ -33,5 +33,9 @@ button{width:100%;margin-top:18px;padding:13px;font-size:16px;font-weight:700;bo
   <button type="submit">はじめる</button>
   <p class="note">IDとパスワードは、ご案内のメッセージに記載しています。このページのURLとIDとパスワードは、ほかの人に教えないでください。</p>
 </form>
+<script>
+// 完走カードのQR（?s=シナリオID）から来た場合、ログイン後にそのシナリオへ戻す
+(() => { const s = new URLSearchParams(location.search).get('s'); if (s && /^[a-z0-9-]{1,40}$/.test(s)) document.querySelector('form').action = '/login?s=' + s; })();
+</script>
 </body>
 </html>

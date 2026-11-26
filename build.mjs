@@ -30,7 +30,8 @@ if (failed) { console.error('台本にエラーがあるため、ビルドを中
 if (!scenarios.length) { console.error('scenarios/ に台本がありません。'); process.exit(1); }
 
 const engine = r('./src/engine.cjs').replace(/<\/script/gi, '<\\/script');
-const app = r('./src/pages/app.html').replace('/*__ENGINE__*/', () => engine);
+const qr = r('./vendor/qrcode.js'); // qrcode-generator 1.4.4（MIT License）
+const app = r('./src/pages/app.html').replace('/*__ENGINE__*/', () => engine).replace('/*__QR__*/', () => qr);
 const out = `// 自動生成（node build.mjs）。直接編集しないでください
 export const APP_HTML = ${JSON.stringify(app)};
 export const LOGIN_HTML = ${JSON.stringify(r('./src/pages/login.html'))};
