@@ -553,9 +553,15 @@ function drawHud(snap, prev, ended, deltas = []) {
     const dv = prev ? v - prev.st[n] : 0;
     const anim = deltas.find((d) => d.n === n);
     const shown = anim ? anim.from : v;
-    return `<div class="sr${anim && anim.newly ? ' pre' : ''}" data-n="${esc(n)}"><span class="k">${esc(n)}</span><span class="v">${statVal(n, shown)}</span>${dv && !anim ? dlHtml(dv) : ''}${barHtml(n, shown)}</div>`;
+    return `<div class="sr${anim && anim.newly ? ' pre' : ''}" data-n="${esc(n)}"><span class="k">${esc(stLabel(n))}</span><span class="v">${statVal(n, shown)}</span>${dv && !anim ? dlHtml(dv) : ''}${barHtml(n, shown)}</div>`;
   }).join('');
 }
+/* β期間の簡易対応（回答88）：ステータスの表示名だけを差し替える。内部名・値・表示条件・判定・台本は変えない。
+   台本の本文を変えないので、途中セーブ（台本のハッシュで照合）もBISCODEもそのまま使える。正式版では登場人物一覧で置き換える */
+const STATUS_LABELS = {
+  '04-romance': { '柚葉': '柚葉（幼なじみ）', '聖良': '聖良（クラスメイト）', '冬華': '冬華（先輩）', '小雪': '小雪（不思議な子）', '柊': '柊（親友）' },
+};
+const stLabel = (n) => (STATUS_LABELS[SC_ID] || {})[n] || n;
 const dlHtml = (dv) => `<span class="dl ${dv > 0 ? 'up' : 'dn'}">${dv > 0 ? '+' : '−'}${Math.abs(dv)}</span>`;
 const statVal = (n, v) => { const def = SC.statuses[n]; return `${v}${def.max != null ? `<small>/${def.max}</small>` : ''}`; };
 // 上限があるステータスは小さなゲージも出す
@@ -595,7 +601,7 @@ function storyCenter() { const r = $('story').closest('.card').getBoundingClient
 function playStatFx(deltas, snap) {
   const [cx, cy] = storyCenter();
   deltas.forEach((d, i) => {
-    const el = chip(`${esc(d.n)} <b>${d.dv > 0 ? '＋' : '−'}${Math.abs(d.dv)}</b>`, d.dv > 0 ? 'up' : 'dn', cx, cy + (i - (deltas.length - 1) / 2) * 52);
+    const el = chip(`${esc(stLabel(d.n))} <b>${d.dv > 0 ? '＋' : '−'}${Math.abs(d.dv)}</b>`, d.dv > 0 ? 'up' : 'dn', cx, cy + (i - (deltas.length - 1) / 2) * 52);
     const row = $('stats').querySelector(`.sr[data-n="${CSS.escape(d.n)}"]`);
     flyTo(el, row, i * 140, () => {
       if (!row || !row.isConnected) return;
